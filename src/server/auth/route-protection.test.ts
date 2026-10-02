@@ -14,17 +14,10 @@ type Handler = (
 ) => Promise<Response>;
 
 async function loadHandlers(): Promise<Array<[string, string, Handler]>> {
-  const products = await import('@/app/api/products/route');
-  const product = await import('@/app/api/products/[id]/route');
   const users = await import('@/app/api/users/route');
   const user = await import('@/app/api/users/[id]/route');
 
   return [
-    ['GET', '/api/products', products.GET as Handler],
-    ['POST', '/api/products', products.POST as Handler],
-    ['GET', '/api/products/1', product.GET],
-    ['PUT', '/api/products/1', product.PUT],
-    ['DELETE', '/api/products/1', product.DELETE],
     ['GET', '/api/users', users.GET as Handler],
     ['POST', '/api/users', users.POST as Handler],
     ['PUT', '/api/users/1', user.PUT],
@@ -75,21 +68,21 @@ describe('reference API routes', () => {
 
   it('serves the owner', async () => {
     clerkAuth.mockResolvedValue({ userId: OWNER });
-    const { GET } = await import('@/app/api/products/route');
+    const { GET } = await import('@/app/api/users/route');
 
-    const response = await GET(new NextRequest('http://localhost/api/products?limit=2'));
+    const response = await GET(new NextRequest('http://localhost/api/users?limit=2'));
 
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { products: unknown[] };
-    expect(body.products).toHaveLength(2);
+    const body = (await response.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(2);
   });
 
   it('fails closed when the owner is not configured', async () => {
     vi.stubEnv('OWNER_CLERK_USER_ID', '');
     clerkAuth.mockResolvedValue({ userId: OWNER });
-    const { GET } = await import('@/app/api/products/route');
+    const { GET } = await import('@/app/api/users/route');
 
-    await expect(GET(new NextRequest('http://localhost/api/products'))).rejects.toThrow(
+    await expect(GET(new NextRequest('http://localhost/api/users'))).rejects.toThrow(
       'OWNER_CLERK_USER_ID is required'
     );
   });

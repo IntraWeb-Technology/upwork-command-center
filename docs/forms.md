@@ -186,7 +186,7 @@ typechecking stays fast at 40+ fields.
 ## Template-specific notes
 
 **Submitting with React Query.** `onSubmit` awaits the mutation; success/error
-handling lives on the mutation (see `features/products/components/product-form.tsx`):
+handling lives on the mutation (see `features/jobs/components/job-create-form.tsx`):
 
 ```tsx
 onSubmit: async ({ value }) => {

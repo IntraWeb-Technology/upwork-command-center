@@ -109,7 +109,12 @@ jobs:
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
 
-      - name: Playwright smoke tests
+      - name: Playwright tests
+        env:
+          # Fake n8n transport only (set in playwright.config.ts); this database is migrated above.
+          DATABASE_URL: postgres://ucc:ucc_ci_only@localhost:5432/ucc_test
+          # Optional dedicated Clerk test user. When unset, the signed-in owner flow is skipped.
+          E2E_CLERK_USER_ID: ${{ vars.E2E_CLERK_USER_ID }}
         run: bun run test:e2e
 
       - name: Upload Playwright report

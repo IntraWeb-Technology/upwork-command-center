@@ -18,7 +18,8 @@ n8n never connects to this database, and the browser never calls n8n. Every n8n 
 | `src/server/db/client.ts` | Server-only lazy `pg` pool and Drizzle instance (`getDb()`), plus `createPool`/`createDatabase` for tests. No domain logic. |
 | `drizzle.config.ts`, `drizzle/` | drizzle-kit configuration and the committed migrations with their journal and snapshots. |
 | `src/server/runs/` | Run domain: IDs, callback tokens, creation, dispatch lifecycle, callback processing, effective status. |
-| `src/server/n8n/` | Transport interface, Remote and Fake transports, HTTP callback handler. |
+| `src/server/n8n/` | Transport interface, Remote and Fake transports, runtime transport selection (`runtime.ts`), HTTP callback handler. |
+| `src/server/jobs/`, `src/server/analyses/` | Job domain, read models, HTTP handlers, analysis start and callback materialization. See [manual-job-analysis.md](./manual-job-analysis.md). |
 | `src/app/api/integrations/n8n/callback/route.ts` | Thin route that wires the handler to `getDb` and the environment. |
 
 ## Connection strategy
@@ -53,7 +54,7 @@ drizzle-kit can print an error and still exit 0, so `scripts/db-check.mjs` also 
 
 ## `workflow_runs`
 
-The only table in this milestone. One row per asynchronous n8n execution.
+One row per asynchronous n8n execution. The job and analysis tables are described in [manual-job-analysis.md](./manual-job-analysis.md#tables).
 
 | Column | Type | Notes |
 | :--- | :--- | :--- |
@@ -61,7 +62,8 @@ The only table in this milestone. One row per asynchronous n8n execution.
 | `contract` | `text` | `ujh.analyze.v1` or `ujh.generate_proposal.v1` (CHECK). Health checks are synchronous and create no runs. |
 | `status` | enum `workflow_run_status` | `queued`, `running`, `succeeded`, `failed`. `timed_out` is never stored. |
 | `request` | `jsonb` | Sanitized summary of the dispatched request (below). |
-| `result` | `jsonb` | Validated success payload (transitional, below). Null unless `succeeded`. |
+| `job_id` | `uuid` | References `jobs`. Null for runs created before jobs existed. |
+| `result` | `jsonb` | Success summary (below). Null unless `succeeded`. |
 | `error_code` | `text` | One of the contract `ERROR_CODES` (CHECK). Set only when `failed`. |
 | `error_stage` | `text` | Contract stage, `dispatch` for dispatch rejections, `callback` for invalid callbacks, or null. |
 | `error_message` | `text` | Validated message (max 1000 characters, no stack traces). |
@@ -81,11 +83,11 @@ Database constraints enforce the invariants, not just application code:
 
 **Request summary.** `request` never contains the callback token, the callback URL, the listing text, analysis prose, a base proposal body, or owner instructions. Analyze stores `job_id`, `upwork_ref`, `source_url`, `listing_id`, `listing_chars`, and `listing_sha256`. Generate Proposal stores `job_id`, `listing_id`, `listing_chars`, `analysis_id`, `base_version_number`, and `has_instructions`.
 
-**Deferred columns.** The architecture's `kind` is replaced by `contract`, which identifies both the workflow and its version. `job_id` and the partial unique index on (`job_id`, `kind`) for active runs are deferred: no `jobs` table exists yet, and a foreign key to nothing would be meaningless. They arrive with the first vertical slice that creates `jobs`, through a normal migration. Until then the job ID is kept in the request summary.
+**Job link.** The architecture's `kind` is replaced by `contract`, which identifies both the workflow and its version. `job_id` and the partial unique index `workflow_runs_active_job_contract_unique` on (`job_id`, `contract`) where the status is `queued` or `running` arrived with the manual job slice (`drizzle/0001_jobs_and_analyses.sql`). A second active run for the same job and contract fails with `RunStateError('CONFLICT')`.
 
 **IDs.** UUIDv7 (RFC 9562) is generated with `node:crypto` in `src/server/runs/ids.ts`: a 48-bit millisecond timestamp, then version and variant bits, then random bits. It is time-ordered (index-friendly), stored in the native `uuid` type, and needs no dependency. It satisfies the contracts' opaque `runIdSchema`.
 
-**Transitional `result`.** There are no domain result tables yet, so a valid success callback stores `{ completed_at, versions, models, result }` in `workflow_runs.result`. Later Analyze and Proposal slices will persist immutable domain records (analyses, scores, proposal versions) in the same transaction that marks the run `succeeded`, through the `materialize` hook of `processCallback`. From then on `workflow_runs.result` is an operational and debugging record, not the query model.
+**`result`.** When the `materialize` hook persists domain records, its return value becomes `workflow_runs.result`. For `ujh.analyze.v1` that is the slim summary `{ completed_at, analysis_id, config_snapshot_id }`; the full validated result lives in `job_analyses.raw_result`. Without a hook result (Generate Proposal, until its slice exists) the transitional `{ completed_at, versions, models, result }` is stored. `workflow_runs.result` is an operational record, not the query model.
 
 ## Run lifecycle
 
@@ -113,7 +115,7 @@ stateDiagram-v2
 
 All transitions are conditional updates (`WHERE status IN (...)`), so a terminal run is never changed: no resurrection and no overwrite. Duplicate callbacks are answered without writes.
 
-**Retries.** There is no Retry endpoint yet. The domain supports one: in a transaction, `failWorkflowRun(..., { code: 'TIMEOUT' })` fails the stale run, then `createWorkflowRun({ retryOfRunId })` creates the next attempt. Only a `failed` run can be retried, with the same contract, and only once (unique index, surfaced as `RunStateError('CONFLICT')`). A late callback for the old run is then a duplicate.
+**Retries.** Analyze Again (`POST /api/jobs/:id/analyses`) starts a fresh run with `attempt = 1`; a stale active run is first failed with `TIMEOUT`. The domain also supports linked retries: in a transaction, `failWorkflowRun(..., { code: 'TIMEOUT' })` fails the stale run, then `createWorkflowRun({ retryOfRunId })` creates the next attempt. Only a `failed` run can be retried, with the same contract, and only once (unique index, surfaced as `RunStateError('CONFLICT')`). A late callback for the old run is then a duplicate.
 
 ## Effective timeout
 
@@ -132,7 +134,7 @@ A valid callback after the displayed timeout is accepted, because the stored sta
 5. In one transaction, the run is locked with `SELECT ... FOR UPDATE` and the per-run token is checked: SHA-256 of the presented token against the stored digest, constant time (`safeEqual` hashes both sides, so unequal lengths cannot throw or leak length). An unknown run gets the same comparison work and the same `403` as a wrong token.
 6. A terminal run gets `200 {"ok":true,"duplicate":true}` with no writes, including when the duplicate carries a different outcome.
 7. The full payload is validated with `callbackEnvelopeSchema` from `src/contracts/callback.ts` (strict objects, so unknown fields are rejected), and its `contract` must equal the run's. If either fails: `400`. The run is marked `failed` (`INTERNAL`, stage `callback`, not retryable) with a message that lists issue paths only, never payload values, and a Sentry warning is sent. The caller has already proven knowledge of the run through its per-run token, so this reveals nothing new.
-8. Otherwise the success or failure is written, the optional `materialize` hook runs in the same transaction, and the response is `200 {"ok":true}`. Any error rolls back the whole transition and returns `500 {"error":"internal_error"}`.
+8. Otherwise the optional `materialize` hook persists the domain records, then the run is marked `succeeded` or `failed` in the same transaction, and the response is `200 {"ok":true}`. Any error rolls back the whole transition and returns `500 {"error":"internal_error"}`, so the run stays active and n8n can retry the callback.
 
 | Status | Meaning |
 | :--- | :--- |
@@ -162,7 +164,7 @@ Response bodies are generic and never echo input. Plaintext callback tokens exis
 | 502, 503, `ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN` | retried once with the same `run_id`; if it fails again, rejected `UPSTREAM_UNAVAILABLE` |
 | Ack timeout, reset or dropped connection, 500, 504, other 5xx, 2xx with a missing, invalid, or mismatched ack | ambiguous (the request may have reached n8n) |
 
-**Fake** (`createFakeTransport`) is scenario-driven for tests and future local development: `ack`, `callback_before_ack`, `success`, `failure`, `reject`, `unavailable`, `ambiguous`. It records requests and builds contract-valid callbacks from the committed fixtures, delivered through an injected function (the integration tests post them to the real HTTP handler). No dispatching endpoint exists yet, so nothing selects a transport at runtime; that selector, and the `N8N_MODE=fake` local mode from the architecture, arrive with the first vertical slice.
+**Fake** (`createFakeTransport`) is scenario-driven for tests and future local development: `ack`, `callback_before_ack`, `success`, `failure`, `reject`, `unavailable`, `ambiguous`. It records requests and builds contract-valid callbacks from the committed fixtures, delivered through an injected function (the integration tests post them to the real HTTP handler). At runtime `N8N_MODE` selects the transport when an analysis starts; see [manual-job-analysis.md](./manual-job-analysis.md#transport-selection).
 
 ## Observability
 
@@ -171,10 +173,13 @@ Response bodies are generic and never echo input. Plaintext callback tokens exis
 ## Integration tests
 
 - `*.integration.test.ts` files run with `bun run test:integration` (`vitest.integration.config.mts`); `bun run test` excludes them.
-- They use real PostgreSQL. The target is `TEST_DATABASE_URL`, defaulting to the local compose `ucc_test`, and they refuse to run unless the database name ends in `_test`.
-- The global setup drops and recreates the `public` and `drizzle` schemas and applies the committed migrations, which proves they apply to an empty database. Each test starts from truncated tables, and files run sequentially.
+- They use real PostgreSQL. `TEST_DATABASE_URL` (default: the local compose `ucc_test`) is only an admin database; the suite refuses to run unless its name ends in `_test`.
+- **Isolation: one database per run.** The global setup (`src/test/integration/global-setup.ts`) creates a fresh database named `<base>_r<UTC timestamp><random hex>_test` (for example `ucc_r20261002071530a1b2c3_test`), applies the committed migrations inside it (proving they apply to an empty database), and hands its URL to the test workers through Vitest `provide`/`inject`. The teardown drops only that database (`DROP DATABASE ... WITH (FORCE)`). Each test truncates the tables of its own run database, and files within a run execute sequentially.
+- Concurrent runs (terminal, IDE runner, agent, CI) therefore never touch each other's data: nothing truncates or drops the shared `ucc_test` database or another run's database. A run that crashes before teardown leaves its database behind; any later run drops run databases of the same prefix older than two hours.
+- Why not one schema per run: the generated migration SQL qualifies objects with `"public"` (for example `"public"."workflow_run_status"`), so a migrated non-public schema would still read and write `public`. A database per run needs no changes to generated migrations. It requires the `CREATEDB` privilege, which the local compose user and the CI service user have.
+- Verified with three concurrent runs and repeated sequential runs, all green.
 - Persistence is never mocked. Dispatch uses the Fake transport, whose callbacks go through the real HTTP handler.
 
 ## CI
 
-The `verify` job runs a `postgres:17` service with synthetic credentials (no secrets) and a `pg_isready` health check. After the unit tests it runs `db:check`, `db:migrate` against the empty database, and `test:integration`. All earlier steps (format, lint, typecheck, contract checks, unit tests, Clerk configuration check, build, Playwright) are unchanged. The build and Playwright steps run without database variables, which proves the app starts without them.
+The `verify` job runs a `postgres:17` service with synthetic credentials (no secrets) and a `pg_isready` health check. After the unit tests it runs `db:check`, `db:migrate` against the empty database, and `test:integration`. The build runs without database variables, which proves the app builds without them. The Playwright step gets the migrated service database and the fake n8n transport (see [manual-job-analysis.md](./manual-job-analysis.md#tests)).

@@ -19,10 +19,10 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
-        title: 'Product',
-        url: '/dashboard/product',
-        icon: 'product',
-        shortcut: ['p', 'p'],
+        title: 'Jobs',
+        url: '/dashboard/jobs',
+        icon: 'jobs',
+        shortcut: ['j', 'j'],
         isActive: false,
         items: []
       },

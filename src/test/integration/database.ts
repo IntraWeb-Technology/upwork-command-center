@@ -1,27 +1,33 @@
 import type { Pool } from 'pg';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, inject } from 'vitest';
 
 import { createDatabase, createPool, type Database } from '@/server/db/client';
-
-import { resolveTestDatabaseUrl } from './test-database-url';
 
 export interface TestDatabase {
   readonly db: Database;
   readonly pool: Pool;
 }
 
-/** Connects once per file and truncates every table before each test. */
+/**
+ * Connects to this run's private database (created by global-setup.ts) and truncates
+ * every application table before each test. Other runs use other databases.
+ */
 export function setupTestDatabase(): TestDatabase {
   let pool: Pool | undefined;
   let db: Database | undefined;
 
   beforeAll(() => {
-    pool = createPool(resolveTestDatabaseUrl());
+    pool = createPool(inject('testDatabaseUrl'));
     db = createDatabase(pool);
   });
 
   beforeEach(async () => {
-    await pool?.query('TRUNCATE TABLE workflow_runs RESTART IDENTITY CASCADE');
+    const tables = await pool!.query<{ tablename: string }>(
+      "select tablename from pg_tables where schemaname = 'public'"
+    );
+    if (tables.rows.length === 0) return;
+    const list = tables.rows.map(({ tablename }) => `"${tablename}"`).join(', ');
+    await pool!.query(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
   });
 
   afterAll(async () => {

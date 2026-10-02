@@ -1,0 +1,1201 @@
+{
+  "id": "76e5618f-1d31-40bc-9dab-816e0db2405c",
+  "prevId": "f935d1f3-4bae-4e5f-87fe-105ebd785d44",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.analysis_scores": {
+      "name": "analysis_scores",
+      "schema": "",
+      "columns": {
+        "analysis_id": {
+          "name": "analysis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dimension": {
+          "name": "dimension",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weight": {
+          "name": "weight",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "analysis_scores_analysis_id_job_analyses_id_fk": {
+          "name": "analysis_scores_analysis_id_job_analyses_id_fk",
+          "tableFrom": "analysis_scores",
+          "columnsFrom": [
+            "analysis_id"
+          ],
+          "tableTo": "job_analyses",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "analysis_scores_pk": {
+          "name": "analysis_scores_pk",
+          "columns": [
+            "analysis_id",
+            "dimension"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "analysis_scores_dimension_check": {
+          "name": "analysis_scores_dimension_check",
+          "value": "\"analysis_scores\".\"dimension\" in ('technical_fit', 'budget_score', 'client_quality', 'long_term_potential', 'communication_quality', 'competition_score', 'strategic_fit')"
+        },
+        "analysis_scores_score_check": {
+          "name": "analysis_scores_score_check",
+          "value": "\"analysis_scores\".\"score\" >= 0 and \"analysis_scores\".\"score\" <= 10"
+        },
+        "analysis_scores_weight_check": {
+          "name": "analysis_scores_weight_check",
+          "value": "\"analysis_scores\".\"weight\" >= 0 and \"analysis_scores\".\"weight\" <= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.config_snapshots": {
+      "name": "config_snapshots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_version": {
+          "name": "workflow_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoring_version": {
+          "name": "scoring_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_prompt_version": {
+          "name": "extraction_prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_prompt_version": {
+          "name": "analysis_prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profile_hash": {
+          "name": "profile_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoring_weights": {
+          "name": "scoring_weights",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score_thresholds": {
+          "name": "score_thresholds",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hard_filter_rules": {
+          "name": "hard_filter_rules",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "models": {
+          "name": "models",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_seen_at": {
+          "name": "first_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "config_snapshots_content_hash_unique": {
+          "name": "config_snapshots_content_hash_unique",
+          "columns": [
+            "content_hash"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "config_snapshots_content_hash_check": {
+          "name": "config_snapshots_content_hash_check",
+          "value": "\"config_snapshots\".\"content_hash\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.job_analyses": {
+      "name": "job_analyses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "listing_id": {
+          "name": "listing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_run_id": {
+          "name": "workflow_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "config_snapshot_id": {
+          "name": "config_snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_status": {
+          "name": "extraction_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_error": {
+          "name": "extraction_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "facts": {
+          "name": "facts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hard_filter_pass": {
+          "name": "hard_filter_pass",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hard_filter_reasons": {
+          "name": "hard_filter_reasons",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weighted_score": {
+          "name": "weighted_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "red_flag_penalty": {
+          "name": "red_flag_penalty",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "system_score": {
+          "name": "system_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "system_disposition": {
+          "name": "system_disposition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "red_flags": {
+          "name": "red_flags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "positive_signals": {
+          "name": "positive_signals",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_problem": {
+          "name": "client_problem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "why_candidate_matches": {
+          "name": "why_candidate_matches",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "missing_information": {
+          "name": "missing_information",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recommended_positioning": {
+          "name": "recommended_positioning",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_summary": {
+          "name": "client_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_summary": {
+          "name": "analysis_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extraction_model": {
+          "name": "extraction_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_provider": {
+          "name": "extraction_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extraction_fallback_used": {
+          "name": "extraction_fallback_used",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_model": {
+          "name": "analysis_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_provider": {
+          "name": "analysis_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_fallback_used": {
+          "name": "analysis_fallback_used",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_result": {
+          "name": "raw_result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "job_analyses_job_created_idx": {
+          "name": "job_analyses_job_created_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "job_analyses_job_id_jobs_id_fk": {
+          "name": "job_analyses_job_id_jobs_id_fk",
+          "tableFrom": "job_analyses",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "job_analyses_workflow_run_id_workflow_runs_id_fk": {
+          "name": "job_analyses_workflow_run_id_workflow_runs_id_fk",
+          "tableFrom": "job_analyses",
+          "columnsFrom": [
+            "workflow_run_id"
+          ],
+          "tableTo": "workflow_runs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "job_analyses_config_snapshot_id_config_snapshots_id_fk": {
+          "name": "job_analyses_config_snapshot_id_config_snapshots_id_fk",
+          "tableFrom": "job_analyses",
+          "columnsFrom": [
+            "config_snapshot_id"
+          ],
+          "tableTo": "config_snapshots",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "job_analyses_listing_fk": {
+          "name": "job_analyses_listing_fk",
+          "tableFrom": "job_analyses",
+          "columnsFrom": [
+            "listing_id",
+            "job_id"
+          ],
+          "tableTo": "job_listings",
+          "columnsTo": [
+            "id",
+            "job_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "job_analyses_workflow_run_unique": {
+          "name": "job_analyses_workflow_run_unique",
+          "columns": [
+            "workflow_run_id"
+          ],
+          "nullsNotDistinct": false
+        },
+        "job_analyses_id_job_unique": {
+          "name": "job_analyses_id_job_unique",
+          "columns": [
+            "id",
+            "job_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "job_analyses_extraction_check": {
+          "name": "job_analyses_extraction_check",
+          "value": "case \"job_analyses\".\"extraction_status\"\n        when 'ok' then \"job_analyses\".\"facts\" is not null and \"job_analyses\".\"extraction_error\" is null\n        when 'failed' then \"job_analyses\".\"facts\" is null and \"job_analyses\".\"extraction_error\" is not null\n        else false\n      end"
+        },
+        "job_analyses_hard_filter_check": {
+          "name": "job_analyses_hard_filter_check",
+          "value": "\"job_analyses\".\"hard_filter_pass\" = (cardinality(\"job_analyses\".\"hard_filter_reasons\") = 0)"
+        },
+        "job_analyses_analysis_check": {
+          "name": "job_analyses_analysis_check",
+          "value": "case when \"job_analyses\".\"hard_filter_pass\" then\n          \"job_analyses\".\"system_score\" is not null and \"job_analyses\".\"system_disposition\" is not null\n          and \"job_analyses\".\"weighted_score\" is not null and \"job_analyses\".\"red_flag_penalty\" is not null\n          and \"job_analyses\".\"analysis_model\" is not null and \"job_analyses\".\"analysis_fallback_used\" is not null\n          and \"job_analyses\".\"analysis_summary\" is not null\n        else\n          \"job_analyses\".\"system_score\" is null and \"job_analyses\".\"system_disposition\" is null\n          and \"job_analyses\".\"weighted_score\" is null and \"job_analyses\".\"analysis_model\" is null\n        end"
+        },
+        "job_analyses_system_disposition_check": {
+          "name": "job_analyses_system_disposition_check",
+          "value": "\"job_analyses\".\"system_disposition\" is null or \"job_analyses\".\"system_disposition\" in ('PRIORITY', 'REVIEW', 'LOW')"
+        },
+        "job_analyses_system_score_check": {
+          "name": "job_analyses_system_score_check",
+          "value": "\"job_analyses\".\"system_score\" is null or (\"job_analyses\".\"system_score\" >= 1 and \"job_analyses\".\"system_score\" <= 10)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.job_events": {
+      "name": "job_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_stage": {
+          "name": "from_stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_stage": {
+          "name": "to_stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor": {
+          "name": "actor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workflow_run_id": {
+          "name": "workflow_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "job_events_job_occurred_idx": {
+          "name": "job_events_job_occurred_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "job_events_job_id_jobs_id_fk": {
+          "name": "job_events_job_id_jobs_id_fk",
+          "tableFrom": "job_events",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "job_events_workflow_run_id_workflow_runs_id_fk": {
+          "name": "job_events_workflow_run_id_workflow_runs_id_fk",
+          "tableFrom": "job_events",
+          "columnsFrom": [
+            "workflow_run_id"
+          ],
+          "tableTo": "workflow_runs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "job_events_idempotency_key_unique": {
+          "name": "job_events_idempotency_key_unique",
+          "columns": [
+            "idempotency_key"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "job_events_type_check": {
+          "name": "job_events_type_check",
+          "value": "\"job_events\".\"type\" in ('JOB_CREATED', 'LISTING_ADDED', 'ANALYSIS_STARTED', 'ANALYZED', 'DECLINED', 'ANALYSIS_OVERRIDE')"
+        },
+        "job_events_actor_check": {
+          "name": "job_events_actor_check",
+          "value": "\"job_events\".\"actor\" in ('owner', 'system', 'n8n')"
+        },
+        "job_events_stage_check": {
+          "name": "job_events_stage_check",
+          "value": "(\"job_events\".\"from_stage\" is null or \"job_events\".\"from_stage\" in ('discovered', 'screened_out', 'dismissed', 'reviewing', 'declined', 'drafting', 'submitted', 'responded', 'interviewing', 'won', 'lost', 'withdrawn'))\n        and (\"job_events\".\"to_stage\" is null or \"job_events\".\"to_stage\" in ('discovered', 'screened_out', 'dismissed', 'reviewing', 'declined', 'drafting', 'submitted', 'responded', 'interviewing', 'won', 'lost', 'withdrawn'))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.job_listings": {
+      "name": "job_listings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_text": {
+          "name": "raw_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text_hash": {
+          "name": "text_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "char_count": {
+          "name": "char_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "job_listings_job_created_idx": {
+          "name": "job_listings_job_created_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "job_listings_job_id_jobs_id_fk": {
+          "name": "job_listings_job_id_jobs_id_fk",
+          "tableFrom": "job_listings",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "job_listings_id_job_unique": {
+          "name": "job_listings_id_job_unique",
+          "columns": [
+            "id",
+            "job_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "job_listings_text_hash_check": {
+          "name": "job_listings_text_hash_check",
+          "value": "\"job_listings\".\"text_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "job_listings_char_count_check": {
+          "name": "job_listings_char_count_check",
+          "value": "\"job_listings\".\"char_count\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "upwork_ref": {
+          "name": "upwork_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "close_reason": {
+          "name": "close_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_analysis_id": {
+          "name": "current_analysis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manual_score": {
+          "name": "manual_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manual_disposition": {
+          "name": "manual_disposition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "override_reason": {
+          "name": "override_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dismiss_reason": {
+          "name": "dismiss_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "jobs_upwork_ref_unique": {
+          "name": "jobs_upwork_ref_unique",
+          "columns": [
+            {
+              "expression": "upwork_ref",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"jobs\".\"upwork_ref\" is not null",
+          "concurrently": false
+        },
+        "jobs_updated_at_idx": {
+          "name": "jobs_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "jobs_current_analysis_fk": {
+          "name": "jobs_current_analysis_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": [
+            "current_analysis_id",
+            "id"
+          ],
+          "tableTo": "job_analyses",
+          "columnsTo": [
+            "id",
+            "job_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "jobs_origin_check": {
+          "name": "jobs_origin_check",
+          "value": "\"jobs\".\"origin\" in ('manual_paste', 'email_alert')"
+        },
+        "jobs_stage_check": {
+          "name": "jobs_stage_check",
+          "value": "\"jobs\".\"stage\" in ('discovered', 'screened_out', 'dismissed', 'reviewing', 'declined', 'drafting', 'submitted', 'responded', 'interviewing', 'won', 'lost', 'withdrawn')"
+        },
+        "jobs_manual_disposition_check": {
+          "name": "jobs_manual_disposition_check",
+          "value": "\"jobs\".\"manual_disposition\" is null or \"jobs\".\"manual_disposition\" in ('PRIORITY', 'REVIEW', 'LOW')"
+        },
+        "jobs_manual_score_check": {
+          "name": "jobs_manual_score_check",
+          "value": "\"jobs\".\"manual_score\" is null or (\"jobs\".\"manual_score\" >= 1 and \"jobs\".\"manual_score\" <= 10)"
+        },
+        "jobs_title_check": {
+          "name": "jobs_title_check",
+          "value": "length(btrim(\"jobs\".\"title\")) between 1 and 300"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workflow_runs": {
+      "name": "workflow_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "contract": {
+          "name": "contract",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "workflow_run_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
+        "request": {
+          "name": "request",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_stage": {
+          "name": "error_stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retryable": {
+          "name": "retryable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "callback_token_hash": {
+          "name": "callback_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "n8n_execution_ref": {
+          "name": "n8n_execution_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempt": {
+          "name": "attempt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "retry_of_run_id": {
+          "name": "retry_of_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_at": {
+          "name": "requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dispatched_at": {
+          "name": "dispatched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_at": {
+          "name": "deadline_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "workflow_runs_retry_of_run_id_unique": {
+          "name": "workflow_runs_retry_of_run_id_unique",
+          "columns": [
+            {
+              "expression": "retry_of_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "workflow_runs_requested_at_idx": {
+          "name": "workflow_runs_requested_at_idx",
+          "columns": [
+            {
+              "expression": "requested_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "workflow_runs_job_idx": {
+          "name": "workflow_runs_job_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "requested_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "workflow_runs_active_job_contract_unique": {
+          "name": "workflow_runs_active_job_contract_unique",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "contract",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"workflow_runs\".\"status\" in ('queued', 'running') and \"workflow_runs\".\"job_id\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "workflow_runs_job_id_jobs_id_fk": {
+          "name": "workflow_runs_job_id_jobs_id_fk",
+          "tableFrom": "workflow_runs",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "workflow_runs_retry_of_run_id_fk": {
+          "name": "workflow_runs_retry_of_run_id_fk",
+          "tableFrom": "workflow_runs",
+          "columnsFrom": [
+            "retry_of_run_id"
+          ],
+          "tableTo": "workflow_runs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "workflow_runs_contract_check": {
+          "name": "workflow_runs_contract_check",
+          "value": "\"workflow_runs\".\"contract\" in ('ujh.analyze.v1', 'ujh.generate_proposal.v1')"
+        },
+        "workflow_runs_callback_token_hash_check": {
+          "name": "workflow_runs_callback_token_hash_check",
+          "value": "\"workflow_runs\".\"callback_token_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "workflow_runs_deadline_check": {
+          "name": "workflow_runs_deadline_check",
+          "value": "\"workflow_runs\".\"deadline_at\" > \"workflow_runs\".\"requested_at\""
+        },
+        "workflow_runs_attempt_check": {
+          "name": "workflow_runs_attempt_check",
+          "value": "\"workflow_runs\".\"attempt\" >= 1 and (\"workflow_runs\".\"attempt\" = 1) = (\"workflow_runs\".\"retry_of_run_id\" is null)"
+        },
+        "workflow_runs_error_code_check": {
+          "name": "workflow_runs_error_code_check",
+          "value": "\"workflow_runs\".\"error_code\" is null or \"workflow_runs\".\"error_code\" in ('INVALID_INPUT', 'UPSTREAM_UNAVAILABLE', 'MODEL_ERROR', 'MODEL_OUTPUT_INVALID', 'TIMEOUT', 'INTERNAL')"
+        },
+        "workflow_runs_outcome_check": {
+          "name": "workflow_runs_outcome_check",
+          "value": "case \"workflow_runs\".\"status\"\n        when 'succeeded' then \"workflow_runs\".\"finished_at\" is not null and \"workflow_runs\".\"result\" is not null and \"workflow_runs\".\"error_code\" is null\n        when 'failed' then \"workflow_runs\".\"finished_at\" is not null and \"workflow_runs\".\"result\" is null and \"workflow_runs\".\"error_code\" is not null and \"workflow_runs\".\"error_message\" is not null and \"workflow_runs\".\"retryable\" is not null\n        else \"workflow_runs\".\"finished_at\" is null and \"workflow_runs\".\"result\" is null and \"workflow_runs\".\"error_code\" is null\n      end"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.workflow_run_status": {
+      "name": "workflow_run_status",
+      "schema": "public",
+      "values": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed"
+      ]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

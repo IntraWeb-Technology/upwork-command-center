@@ -43,7 +43,11 @@ export interface CreateWorkflowRunInput {
   deadlineMs?: number;
   /** The failed run this one retries; the new run gets attempt = previous + 1. */
   retryOfRunId?: string;
+  /** Owning job. At most one queued or running run per job and contract. */
+  jobId?: string;
 }
+
+const ACTIVE_RUN_INDEX = 'workflow_runs_active_job_contract_unique';
 
 export interface CreatedWorkflowRun {
   run: WorkflowRun;
@@ -89,6 +93,7 @@ export async function createWorkflowRun(
       .values({
         id: input.id ?? uuidv7(now),
         contract: input.contract,
+        jobId: input.jobId ?? null,
         status: 'queued',
         request: input.request,
         callbackTokenHash: hashCallbackToken(callbackToken),
@@ -100,11 +105,43 @@ export async function createWorkflowRun(
       .returning();
     return { run: toWorkflowRun(row), callbackToken };
   } catch (error) {
-    if (input.retryOfRunId && pgErrorCode(error) === '23505') {
-      throw new RunStateError('CONFLICT', 'this run has already been retried');
+    if (pgErrorCode(error) === '23505') {
+      if (pgConstraint(error) === ACTIVE_RUN_INDEX) {
+        throw new RunStateError('CONFLICT', 'an active run already exists for this job');
+      }
+      if (input.retryOfRunId) {
+        throw new RunStateError('CONFLICT', 'this run has already been retried');
+      }
     }
     throw error;
   }
+}
+
+/** Active (queued or running) run of a job for a contract, if any. */
+export async function getActiveJobRun(
+  db: DbExecutor,
+  jobId: string,
+  contract: WorkflowContract
+): Promise<WorkflowRun | null> {
+  const [row] = await db
+    .select()
+    .from(workflowRuns)
+    .where(
+      and(
+        eq(workflowRuns.jobId, jobId),
+        eq(workflowRuns.contract, contract),
+        inArray(workflowRuns.status, ['queued', 'running'])
+      )
+    );
+  return row ? toWorkflowRun(row) : null;
+}
+
+function pgConstraint(error: unknown): string | null {
+  for (let current = error; current instanceof Error; current = current.cause) {
+    const constraint = (current as Error & { constraint?: unknown }).constraint;
+    if (typeof constraint === 'string') return constraint;
+  }
+  return null;
 }
 
 /** Postgres SQLSTATE from a pg error, including when Drizzle wraps it as the cause. */

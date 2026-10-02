@@ -18,14 +18,16 @@ import {
 } from './types';
 
 /**
- * Persists domain records for a callback inside the same transaction as the status change.
- * Throwing rolls back the whole transition. Future slices (analysis, proposal) plug in here.
+ * Persists domain records for a callback inside the same transaction as the status change,
+ * before the run becomes terminal. Throwing rolls back the whole transition. For a success,
+ * the returned object replaces the transitional `workflow_runs.result` payload, so domain
+ * slices can store a reference to their own rows instead of a copy.
  */
 export type MaterializeCallback = (
   tx: Transaction,
   run: WorkflowRun,
   callback: CallbackEnvelope
-) => Promise<void>;
+) => Promise<Record<string, unknown> | void>;
 
 export type CallbackOutcome =
   | { type: 'malformed' }
@@ -108,13 +110,14 @@ export async function processCallback(
 
     const callback = parsed.data;
     const executionRef = callback.execution_ref ?? run.n8nExecutionRef;
+    const materialized = materialize ? await materialize(tx, run, callback) : undefined;
     if (callback.status === 'succeeded') {
       await tx
         .update(workflowRuns)
         .set({
           status: 'succeeded',
-          // Transitional storage until domain tables exist (see docs/persistence.md).
-          result: {
+          // Without a domain materializer the validated payload is kept here (docs/persistence.md).
+          result: materialized ?? {
             completed_at: callback.completed_at,
             versions: callback.versions,
             models: callback.models,
@@ -139,7 +142,6 @@ export async function processCallback(
         .where(eq(workflowRuns.id, runId));
     }
 
-    if (materialize) await materialize(tx, run, callback);
     return { type: 'processed', runId, contract: run.contract, status: callback.status };
   });
 }

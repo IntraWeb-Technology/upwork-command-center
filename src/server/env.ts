@@ -27,7 +27,26 @@ const serverEnvSchema = z.object({
   DATABASE_URL_DIRECT: optionalPostgresUrl,
   N8N_BASE_URL: optionalUrl,
   N8N_WEBHOOK_TOKEN: optionalToken,
-  N8N_CALLBACK_TOKEN: optionalToken
+  N8N_CALLBACK_TOKEN: optionalToken,
+  // Public origin of this app; n8n posts callbacks to <APP_BASE_URL>/api/integrations/n8n/callback.
+  APP_BASE_URL: optionalUrl,
+  // Transport selection (src/server/n8n/runtime.ts). Unset means remote; fake is opt-in.
+  N8N_MODE: z.enum(['fake', 'remote'], { error: 'must be "fake" or "remote"' }).optional(),
+  N8N_FAKE_SCENARIO: z
+    .enum(['succeeded', 'hard_filtered', 'failed'], {
+      error: 'must be "succeeded", "hard_filtered", or "failed"'
+    })
+    .optional(),
+  N8N_FAKE_DELAY_MS: z.coerce
+    .number({ error: 'must be a number of milliseconds' })
+    .int({ error: 'must be a whole number of milliseconds' })
+    .min(0)
+    .max(60_000)
+    .optional(),
+  // Fake mode is refused in production builds unless this is "true" (CI end-to-end tests only).
+  N8N_ALLOW_FAKE_IN_PRODUCTION: z
+    .enum(['true', 'false'], { error: 'must be "true" or "false"' })
+    .optional()
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

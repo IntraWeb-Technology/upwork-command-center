@@ -8,7 +8,7 @@ import {
   type AnalyzeRequest,
   type GenerateProposalRequest
 } from '@/contracts';
-import type { Database } from '@/server/db/client';
+import type { Database, Transaction } from '@/server/db/client';
 import type { DispatchOutcome, DispatchRequest, N8nTransport } from '@/server/n8n/transport';
 
 import { generateCallbackToken } from './callback-token';
@@ -60,10 +60,17 @@ export class InvalidRunRequestError extends Error {
  * Validate, persist intent, dispatch. The queued run (with its token digest and deadline)
  * is committed before n8n is called, so an early callback always finds it.
  */
+export interface DispatchOptions {
+  deadlineMs?: number;
+  jobId?: string;
+  /** Runs in the transaction that inserts the queued run, for example to append an event. */
+  onCreated?: (tx: Transaction, run: WorkflowRun) => Promise<void>;
+}
+
 export async function dispatchWorkflowRun(
   deps: DispatchDeps,
   input: DispatchInput,
-  options: { deadlineMs?: number } = {}
+  options: DispatchOptions = {}
 ): Promise<DispatchResult> {
   const now = deps.now?.() ?? new Date();
   const runId = uuidv7(now);
@@ -94,13 +101,17 @@ export async function dispatchWorkflowRun(
     summary = summarizeGenerateProposalRequest(parsed);
   }
 
-  await createWorkflowRun(deps.db, {
-    id: runId,
-    callbackToken,
-    contract: input.contract,
-    request: summary,
-    now,
-    deadlineMs: options.deadlineMs
+  await deps.db.transaction(async (tx) => {
+    const { run } = await createWorkflowRun(tx, {
+      id: runId,
+      callbackToken,
+      contract: input.contract,
+      request: summary,
+      now,
+      deadlineMs: options.deadlineMs,
+      jobId: options.jobId
+    });
+    await options.onCreated?.(tx, run);
   });
 
   const context = { runId, contract: input.contract };

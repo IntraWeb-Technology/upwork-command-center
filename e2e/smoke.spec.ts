@@ -15,8 +15,8 @@ test('signed-out visitors are sent from the dashboard to sign-in', async ({ page
   await expect(page).toHaveURL(/\/auth\/sign-in/);
 });
 
-test('reference API routes reject signed-out requests', async ({ request }) => {
-  for (const path of ['/api/products', '/api/users']) {
+test('API routes reject signed-out requests', async ({ request }) => {
+  for (const path of ['/api/jobs', '/api/users']) {
     const response = await request.get(path);
 
     expect(response.status(), path).toBe(401);

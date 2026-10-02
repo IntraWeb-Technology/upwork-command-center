@@ -4,7 +4,7 @@ Personal control center for the Upwork Job Hunter Automation system.
 
 This is a single-user internal application. It is the UI/control plane for the automation system; n8n remains the workflow engine. See [AGENTS.md](./AGENTS.md) for project rules.
 
-The application is currently a trimmed starter baseline. The remaining Product and Users pages are reference implementations of the table, form, and data-layer patterns and will be replaced by Upwork-specific features.
+The first Upwork feature is manual job analysis: paste a listing, save an immutable snapshot, and get a scored analysis from the `ujh.analyze.v1` workflow (see [docs/manual-job-analysis.md](./docs/manual-job-analysis.md)). The Overview and Users pages are remaining starter references with mock data.
 
 ## Upstream
 
@@ -42,9 +42,10 @@ git log --oneline development..upstream/main
 | :------------------- | :--------------------------------------------------------------------------------------------------------------- |
 | Sign in / Sign up    | Clerk, at `/auth/sign-in` and `/auth/sign-up`.                                                                   |
 | Dashboard Overview   | Cards and Recharts graphs. Parallel routes give each section its own loading and error state. Mock data.         |
-| Product List (Table) | Reference pattern: TanStack Table, React Query (server prefetch, client cache), nuqs URL state. Mock data.       |
-| Product Form         | Reference pattern: TanStack Form and Zod with `useMutation` and cache invalidation. Mock data.                   |
-| Users (Table)        | Reference pattern: same setup as Products. Mock data.                                                            |
+| Jobs                 | Saved jobs with stage, system score, and disposition. TanStack Table, React Query, nuqs URL state. PostgreSQL.   |
+| Analyze Job          | Paste a listing (title, optional Upwork URL, full text) and start the analysis.                                   |
+| Job detail           | Listing snapshot, analysis (score, dimensions, signals), timeline, override, and decline.                        |
+| Users (Table)        | Starter reference pattern. Mock data.                                                                            |
 | Profile              | Clerk's account management UI.                                                                                   |
 
 ## Folder Structure
@@ -55,10 +56,10 @@ src/
 │   ├── auth/                      # Auth pages (sign-in, sign-up)
 │   ├── dashboard/                 # Dashboard route group
 │   │   ├── overview/              # Analytics with parallel routes
-│   │   ├── product/               # Product CRUD pages (reference pattern)
+│   │   ├── jobs/                  # Jobs list, Analyze Job form, job detail
 │   │   ├── users/                 # Users table (reference pattern)
 │   │   └── profile/               # User profile (Clerk)
-│   └── api/                       # Route handlers (mock products/users API)
+│   └── api/                       # Route handlers (jobs, workflow runs, n8n callback, mock users)
 │
 ├── components/                    # Shared components
 │   ├── ui/                        # UI primitives (buttons, inputs, dialogs, etc.)
@@ -69,11 +70,12 @@ src/
 │
 ├── features/                      # Feature-based modules
 │   ├── overview/                  # Dashboard analytics (charts, cards)
-│   ├── products/                  # Product listing, form, tables
+│   ├── jobs/                      # Jobs UI and client data layer
 │   ├── users/                     # User table
 │   ├── auth/                      # Auth components
 │   └── profile/                   # Profile components
 │
+├── server/                        # Server-only code: database, runs, jobs, analyses, n8n
 ├── lib/                           # Core utilities (query-client, searchparams, etc.)
 ├── hooks/                         # Custom hooks
 ├── config/                        # Navigation, infobar, data table config
@@ -99,18 +101,20 @@ git clone https://github.com/IntraWeb-Technology/upwork-command-center.git
 
 The app runs at http://localhost:3000 (or the next free port).
 
-### Local database (optional until a feature needs it)
+### Local database and fake n8n
 
-Requires Docker. The compose database uses synthetic, local-only credentials on `127.0.0.1:54329`:
+Jobs need PostgreSQL. Requires Docker. The compose database uses synthetic, local-only credentials on `127.0.0.1:54329`:
 
 ```bash
 docker compose up -d --wait   # Postgres 17 with ucc_dev and ucc_test databases
 # In .env.local: DATABASE_URL=postgres://ucc:ucc_local_only@127.0.0.1:54329/ucc_dev
 bun run db:migrate            # apply committed migrations to ucc_dev
-bun run test:integration      # integration tests (recreate the ucc_test schema)
+bun run test:integration      # integration tests (each run uses its own temporary database)
 ```
 
-See [docs/persistence.md](./docs/persistence.md).
+To analyze jobs without n8n, add `N8N_MODE=fake` to `.env.local`: an in-process fake answers with fixture results through the real callback path. Without it, starting an analysis needs the real n8n configuration and otherwise returns "Analysis is not available".
+
+See [docs/persistence.md](./docs/persistence.md) and [docs/manual-job-analysis.md](./docs/manual-job-analysis.md).
 
 > [!NOTE]
 > On Windows, keep LF line endings (`git config core.autocrlf false`) or `bun run format:check` will flag every file.
@@ -121,7 +125,7 @@ See `env.example.txt`. Never commit `.env*` files or real keys, user IDs, URLs, 
 
 - **Required:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `OWNER_CLERK_USER_ID`.
 - **Optional:** Sentry (inactive without `NEXT_PUBLIC_SENTRY_DSN`) and build settings.
-- **Feature-scoped:** `DATABASE_URL` (and optional `DATABASE_URL_DIRECT` for migrations), `N8N_BASE_URL`, `N8N_WEBHOOK_TOKEN`, `N8N_CALLBACK_TOKEN`. They are validated only if set; sign-in and the dashboard work without them, and code that needs one fails with its name. The n8n callback route answers `401` while `N8N_CALLBACK_TOKEN` is unset.
+- **Feature-scoped:** `DATABASE_URL` (and optional `DATABASE_URL_DIRECT` for migrations), `APP_BASE_URL`, `N8N_MODE`, `N8N_BASE_URL`, `N8N_WEBHOOK_TOKEN`, `N8N_CALLBACK_TOKEN`, and the fake-transport settings `N8N_FAKE_SCENARIO`, `N8N_FAKE_DELAY_MS`, `N8N_ALLOW_FAKE_IN_PRODUCTION`. They are validated only if set; sign-in and the dashboard work without them, and code that needs one fails with its name. The n8n callback route answers `401` while `N8N_CALLBACK_TOKEN` is unset.
 
 Server variables are validated at startup by `src/server/env.ts`. A missing or invalid value stops the server with the variable names (never the values).
 
@@ -152,7 +156,7 @@ See [docs/clerk_setup.md](./docs/clerk_setup.md). The sign-in and sign-up URLs m
 | `bun run test:contracts` | n8n contract tests and fixture validation |
 | `bun run contracts:generate` | Regenerate `contracts/json-schema` from the Zod contracts |
 | `bun run contracts:check` | Fail if the committed JSON Schema is stale |
-| `bun run test:e2e`     | Playwright smoke tests against the production build (run `bun run build` first; first time: `bunx playwright install chromium`) |
+| `bun run test:e2e`     | Playwright tests against the production build with the fake n8n transport (run `bun run build` first; first time: `bunx playwright install chromium`). The signed-in job analysis flow also needs `DATABASE_URL` and `E2E_CLERK_USER_ID` (a dedicated Clerk test user) and is skipped otherwise. |
 
 Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom with `// @vitest-environment jsdom`. Playwright specs live in `e2e/`.
 
@@ -162,7 +166,7 @@ Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom wi
 
 CI also fails when the generated contract JSON Schema is stale (`bun run contracts:check`); see [docs/contracts.md](./docs/contracts.md).
 
-A disposable PostgreSQL 17 service (synthetic credentials, no secrets) backs three more steps: `db:check` (schema changed without a migration), `db:migrate` against the empty database, and `test:integration`.
+A disposable PostgreSQL 17 service (synthetic credentials, no secrets) backs `db:check` (schema changed without a migration), `db:migrate` against the empty database, `test:integration`, and the Playwright server. The signed-in Playwright flow runs only when the repository variable `E2E_CLERK_USER_ID` names a dedicated Clerk test user.
 
 GitHub currently annotates runs with "Node.js 20 is deprecated" for `actions/checkout@v4` and `actions/setup-node@v4`. The runner already executes them on Node 24 and the jobs pass, so this is informational; upgrading those actions is a separate maintenance task.
 
@@ -171,6 +175,7 @@ Git hooks: pre-commit formats staged files; pre-push runs a production build.
 ## Further documentation
 
 - [docs/contracts.md](./docs/contracts.md) - versioned n8n integration contracts
+- [docs/manual-job-analysis.md](./docs/manual-job-analysis.md) - manual job and analysis flow, tables, transport selection
 - [docs/persistence.md](./docs/persistence.md) - PostgreSQL, migrations, workflow runs, callback security
 - [docs/forms.md](./docs/forms.md) - form system (TanStack Form + Zod)
 - [docs/themes.md](./docs/themes.md) - theme system
