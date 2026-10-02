@@ -17,8 +17,9 @@
 
 import { fakeProducts } from '@/constants/mock-api';
 import { NextRequest, NextResponse } from 'next/server';
+import { withOwner } from '@/server/auth/require-owner';
 
-export async function GET(request: NextRequest) {
+export const GET = withOwner(async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
 
   const page = Number(searchParams.get('page') ?? 1);
@@ -36,10 +37,10 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json(data);
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withOwner(async (request: NextRequest) => {
   const body = await request.json();
   const data = await fakeProducts.createProduct(body);
   return NextResponse.json(data, { status: 201 });
-}
+});

@@ -1,7 +1,8 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 
-// Route protection lives in the /dashboard layout via `auth.protect()`.
 // clerkMiddleware() only attaches the auth context to every request.
+// Authorization lives at each boundary: the /dashboard layout (`auth.protect()`
+// plus the owner check) and every API route handler (`withOwner`).
 export default clerkMiddleware();
 export const config = {
   matcher: [

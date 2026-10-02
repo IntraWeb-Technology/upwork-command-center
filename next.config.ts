@@ -32,7 +32,7 @@ const baseConfig: NextConfig = {
 let configWithPlugins = baseConfig;
 
 // Conditionally enable Sentry configuration
-if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
+if (process.env.NEXT_PUBLIC_SENTRY_DISABLED !== 'true') {
   configWithPlugins = withSentryConfig(configWithPlugins, {
     org: process.env.NEXT_PUBLIC_SENTRY_ORG,
     project: process.env.NEXT_PUBLIC_SENTRY_PROJECT,

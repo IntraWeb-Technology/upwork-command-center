@@ -90,10 +90,11 @@ Clone the repo:
 git clone https://github.com/IntraWeb-Technology/upwork-command-center.git
 ```
 
-- Install [Bun](https://bun.sh) (the project's package manager; `bun.lock` is the lockfile)
+- Install **Node 24** (`.nvmrc`; `package.json` `engines` allows 24.x only). Node is the application runtime in development and production.
+- Install [Bun](https://bun.sh) 1.4 (package manager and script runner only; `bun.lock` is the lockfile)
 - `bun install --frozen-lockfile`
 - Copy the example env file: `cp env.example.txt .env.local`
-- Fill in the required variables in `.env.local`. Clerk keys are required for the dashboard to load (`clerk env pull` with the Clerk CLI writes them for you). Sentry is optional.
+- Fill in the required variables in `.env.local`. Clerk keys are required for the dashboard to load (`clerk env pull` with the Clerk CLI writes them for you). Set `OWNER_CLERK_USER_ID` to your own Clerk user ID. Sentry is optional.
 - `bun run dev`
 
 The app runs at http://localhost:3000 (or the next free port).
@@ -103,7 +104,17 @@ The app runs at http://localhost:3000 (or the next free port).
 
 ### Environment variables
 
-See `env.example.txt`. Clerk keys are required; Sentry and build settings are optional. Never commit `.env*` files.
+See `env.example.txt`. Never commit `.env*` files or real keys, user IDs, URLs, or tokens; use placeholders in examples.
+
+- **Required:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `OWNER_CLERK_USER_ID`.
+- **Optional:** Sentry (inactive without `NEXT_PUBLIC_SENTRY_DSN`) and build settings.
+- **Not used yet:** database and n8n variables; they are validated only if set.
+
+Server variables are validated at startup by `src/server/env.ts`. A missing or invalid value stops the server with the variable names (never the values).
+
+### Single-owner access
+
+Clerk authenticates; only the account whose user ID equals `OWNER_CLERK_USER_ID` is authorized. Other signed-in accounts see "Access denied" in the dashboard and get `403` from APIs; signed-out API requests get `401`. Every API route handler must be wrapped with `withOwner` from `src/server/auth/require-owner.ts`. Also restrict sign-ups in the Clerk dashboard.
 
 ### Clerk setup
 
@@ -119,6 +130,17 @@ See [docs/clerk_setup.md](./docs/clerk_setup.md). The sign-in and sign-up URLs m
 | `bun run typecheck`    | TypeScript check              |
 | `bun run lint`         | OxLint                        |
 | `bun run format:check` | Oxfmt check                   |
+| `bun run test`         | Unit and integration tests (Vitest, single run) |
+| `bun run test:watch`   | Vitest in watch mode          |
+| `bun run test:e2e`     | Playwright smoke tests against the production build (run `bun run build` first; first time: `bunx playwright install chromium`) |
+
+Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom with `// @vitest-environment jsdom`. Playwright specs live in `e2e/`.
+
+### CI
+
+`.github/workflows/ci.yml` runs on pushes to `development` and `main` and on pull requests targeting them: frozen install, format check, strict lint, typecheck, tests, production build, and Playwright smoke tests (Node 24, Bun). It needs a Clerk development instance configured in the repository settings: the variable `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and the secret `CLERK_SECRET_KEY`.
+
+Git hooks: pre-commit formats staged files; pre-push runs a production build.
 
 ## Further documentation
 

@@ -6,10 +6,11 @@
 
 import { fakeProducts } from '@/constants/mock-api';
 import { NextRequest, NextResponse } from 'next/server';
+import { withOwner } from '@/server/auth/require-owner';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = withOwner(async (request: NextRequest, { params }: Params) => {
   const { id } = await params;
   const data = await fakeProducts.getProductById(Number(id));
 
@@ -18,9 +19,9 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PUT(request: NextRequest, { params }: Params) {
+export const PUT = withOwner(async (request: NextRequest, { params }: Params) => {
   const { id } = await params;
   const body = await request.json();
   const data = await fakeProducts.updateProduct(Number(id), body);
@@ -30,9 +31,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(request: NextRequest, { params }: Params) {
+export const DELETE = withOwner(async (request: NextRequest, { params }: Params) => {
   const { id } = await params;
   const data = await fakeProducts.deleteProduct(Number(id));
 
@@ -41,4 +42,4 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   }
 
   return NextResponse.json(data);
-}
+});
