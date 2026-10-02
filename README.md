@@ -1,26 +1,19 @@
-<h1 align="center">Admin Dashboard Template with Next.js &amp; Shadcn UI</h1>
+# Upwork Command Center
 
-<div align="center">Free, open source admin dashboard starter built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript</div>
+Personal control center for the Upwork Job Hunter Automation system.
 
-<div align="center">
-  <a href="https://dub.sh/shadcn-dashboard"><strong>View Demo</strong></a>
-</div>
+This application is currently the unmodified starter baseline. The sections below the Upstream section are carried over from the upstream starter and describe its existing features and setup.
 
-<br />
+## Upstream
 
-<div align="center">
-  <img src="/public/shadcn-dashboard.png" alt="Shadcn Dashboard Cover" style="max-width: 100%; border-radius: 8px;" />
-</div>
+Original project: https://github.com/Kiranism/next-shadcn-dashboard-starter
 
-<br />
+This repository originated from that project (MIT License, see [LICENSE](./LICENSE)) and has since been adapted for the Upwork Command Center. The `upstream` git remote points at the original repository so future upstream fixes can be inspected and selectively incorporated:
 
-<p align="center">
-  <a href="https://github.com/Kiranism/next-shadcn-dashboard-starter/stargazers"><img src="https://img.shields.io/github/stars/Kiranism/next-shadcn-dashboard-starter?style=social" alt="GitHub stars" /></a>
-  <a href="https://github.com/Kiranism/next-shadcn-dashboard-starter/network/members"><img src="https://img.shields.io/github/forks/Kiranism/next-shadcn-dashboard-starter?style=social" alt="Forks" /></a>
-  <a href="https://github.com/Kiranism/next-shadcn-dashboard-starter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Kiranism/next-shadcn-dashboard-starter" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/Next.js-16-black" alt="Next.js" />
-  <a href="https://go.clerk.com/ILdYhn7"><img src="https://img.shields.io/badge/Sponsored_by-Clerk-6C47FF?style=flat-square&logo=clerk" alt="Sponsored by Clerk" /></a>
-</p>
+```bash
+git fetch upstream
+git log --oneline development..upstream/main
+```
 
 ## Overview
 
@@ -164,13 +157,17 @@ src/
 Clone the repo:
 
 ```
-git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
+git clone https://github.com/IntraWeb-Technology/upwork-command-center.git
 ```
 
-- `bun install`
+- Install [Bun](https://bun.sh) (the project's package manager; `bun.lock` is the lockfile)
+- `bun install --frozen-lockfile`
 - Copy the example env file: `cp env.example.txt .env.local`
-- Fill in the required variables in `.env.local`
+- Fill in the required variables in `.env.local`. Clerk keys are required for the dashboard to load (`clerk env pull` with the Clerk CLI writes them for you). Sentry is optional.
 - `bun run dev`
+
+> [!NOTE]
+> On Windows, keep LF line endings (`git config core.autocrlf false`) or `bun run format:check` will flag every file.
 
 ##### Environment variables
 

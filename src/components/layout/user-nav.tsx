@@ -29,7 +29,7 @@ export function UserNav() {
               <div className='flex flex-col space-y-1'>
                 <p className='text-sm leading-none font-medium'>{user.fullName}</p>
                 <p className='text-muted-foreground text-xs leading-none'>
-                  {user.emailAddresses[0].emailAddress}
+                  {user.emailAddresses[0]?.emailAddress}
                 </p>
               </div>
             </DropdownMenuLabel>

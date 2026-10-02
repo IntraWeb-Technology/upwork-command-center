@@ -4,6 +4,29 @@ This file provides essential information for AI coding agents working on this pr
 
 ---
 
+## Upwork Command Center Rules
+
+These rules take precedence over the starter conventions below.
+
+1. This application is the UI/control plane for the Upwork Job Hunter Automation system.
+2. n8n remains the workflow/orchestration engine.
+3. Do not duplicate workflow/business logic in the frontend unless explicitly required.
+4. Communicate with automation services through defined APIs/webhooks. Do not couple the dashboard to individual n8n nodes.
+5. Secrets must remain server-side.
+6. Do not introduce Upwork browser automation, scraping, automated proposal submission, or any other behavior that risks violating Upwork restrictions.
+7. The application is currently single-user.
+8. Do not introduce multi-tenancy, organizations, team management, subscriptions, or SaaS billing unless explicitly requested.
+9. Prefer incremental changes over large rewrites.
+10. Before changing architecture, inspect the existing implementation and explain the proposed change.
+11. Keep TypeScript strict. Avoid `any` unless technically unavoidable, and document why when used.
+12. Preserve accessibility and responsive behavior.
+13. Do not introduce unnecessary dependencies.
+14. Do not use em dashes in user-facing generated copy or proposal-generation prompts.
+
+The sections below are inherited from the upstream starter and describe its existing conventions. Where they mention organizations, billing, or multi-tenant features, rule 8 applies.
+
+---
+
 ## Project Overview
 
 **Next.js Admin Dashboard Starter** is a production-ready admin dashboard template built with:
