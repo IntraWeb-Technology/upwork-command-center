@@ -132,6 +132,9 @@ See [docs/clerk_setup.md](./docs/clerk_setup.md). The sign-in and sign-up URLs m
 | `bun run format:check` | Oxfmt check                   |
 | `bun run test`         | Unit and integration tests (Vitest, single run) |
 | `bun run test:watch`   | Vitest in watch mode          |
+| `bun run test:contracts` | n8n contract tests and fixture validation |
+| `bun run contracts:generate` | Regenerate `contracts/json-schema` from the Zod contracts |
+| `bun run contracts:check` | Fail if the committed JSON Schema is stale |
 | `bun run test:e2e`     | Playwright smoke tests against the production build (run `bun run build` first; first time: `bunx playwright install chromium`) |
 
 Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom with `// @vitest-environment jsdom`. Playwright specs live in `e2e/`.
@@ -140,10 +143,15 @@ Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom wi
 
 `.github/workflows/ci.yml` runs on pushes to `development` and `main` and on pull requests targeting them: frozen install, format check, strict lint, typecheck, tests, production build, and Playwright smoke tests (Node 24, Bun). It needs a Clerk development instance configured in the repository settings: the variable `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and the secret `CLERK_SECRET_KEY`.
 
+CI also fails when the generated contract JSON Schema is stale (`bun run contracts:check`); see [docs/contracts.md](./docs/contracts.md).
+
+GitHub currently annotates runs with "Node.js 20 is deprecated" for `actions/checkout@v4` and `actions/setup-node@v4`. The runner already executes them on Node 24 and the jobs pass, so this is informational; upgrading those actions is a separate maintenance task.
+
 Git hooks: pre-commit formats staged files; pre-push runs a production build.
 
 ## Further documentation
 
+- [docs/contracts.md](./docs/contracts.md) - versioned n8n integration contracts
 - [docs/forms.md](./docs/forms.md) - form system (TanStack Form + Zod)
 - [docs/themes.md](./docs/themes.md) - theme system
 - [docs/deployment.md](./docs/deployment.md) - Vercel and Docker deployment

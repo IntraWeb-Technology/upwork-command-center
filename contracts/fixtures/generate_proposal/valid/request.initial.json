@@ -1,0 +1,36 @@
+{
+  "contract": "ujh.generate_proposal.v1",
+  "run_id": "01920000-0000-7000-8000-00000000p001",
+  "requested_at": "2026-10-02T14:10:00Z",
+  "callback": {
+    "url": "https://command.example.com/api/integrations/n8n/callback",
+    "token": "rt_synthetic_fixture_token_proposal_001"
+  },
+  "job": {
+    "id": "01920000-0000-7000-8000-00000000j001",
+    "title": "Synthetic: extend a Next.js admin dashboard",
+    "job_category": "NEXTJS_REACT",
+    "budget_type": "fixed",
+    "budget_min": 3000,
+    "budget_max": 5000,
+    "hourly_min": null,
+    "hourly_max": null,
+    "connect_cost": 16
+  },
+  "listing": {
+    "id": "01920000-0000-7000-8000-00000000l001",
+    "text": "SYNTHETIC FIXTURE LISTING. We run an internal Next.js admin dashboard backed by PostgreSQL and need a senior engineer to add role-based reporting pages, fix slow queries, and write tests. Fixed budget between 3000 and 5000 USD. Payment verified, 18 previous hires."
+  },
+  "analysis": {
+    "id": "01920000-0000-7000-8000-00000000n001",
+    "client_problem": "The internal team cannot keep up with reporting requests.",
+    "recommended_positioning": "Senior engineer who can extend an existing codebase safely.",
+    "why_candidate_matches": ["Production Next.js and PostgreSQL work"],
+    "positive_signals": ["Verified payment", "Repeat hiring history"],
+    "red_flags": ["Scope of legacy code unknown"],
+    "missing_information": ["Next.js version"],
+    "analysis_summary": "Solid fit with a reliable client and moderate competition."
+  },
+  "base_version": null,
+  "instructions": null
+}

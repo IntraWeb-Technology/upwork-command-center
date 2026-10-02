@@ -1,0 +1,45 @@
+{
+  "contract": "ujh.generate_proposal.v1",
+  "run_id": "01920000-0000-7000-8000-00000000p004",
+  "callback_token": "rt_synthetic_fixture_token_proposal_004",
+  "completed_at": "2026-10-02T14:11:30Z",
+  "execution_ref": "fixture-exec-2004",
+  "status": "succeeded",
+  "versions": {
+    "workflow": "cc-generate-proposal@2026-10-05.1",
+    "proposal_strategy_prompt": "proposal-v4",
+    "proposal_writer_prompt": "proposal-v4",
+    "profile_hash": "a41c9e02"
+  },
+  "models": {
+    "strategy": {
+      "model": "fixture-strategy-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    },
+    "writer": {
+      "model": "fixture-writer-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    }
+  },
+  "result": {
+    "body": "Synthetic fixture proposal whose plan is missing the opening hook and carries a field the live plan schema does not have, so the contract must reject it before anything is stored in the Command Center.",
+    "strategy": {
+      "client_real_problem": "Reporting requests outpace the internal team.",
+      "proposal_angle": "Safe extension of an existing dashboard.",
+      "relevant_experience": [],
+      "key_points": [],
+      "technical_details": [],
+      "recommended_case_study": "none",
+      "include_case_study_link": false,
+      "recommended_bid_strategy": "Bid near the middle of the stated range.",
+      "questions_to_client": [],
+      "risk_to_address": "Unknown legacy code quality.",
+      "strengths": ["Not part of the live plan schema"]
+    },
+    "sanitizer": { "em_dashes_removed": 0 }
+  }
+}

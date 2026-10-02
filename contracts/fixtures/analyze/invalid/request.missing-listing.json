@@ -1,0 +1,18 @@
+{
+  "contract": "ujh.analyze.v1",
+  "run_id": "01920000-0000-7000-8000-00000000a005",
+  "requested_at": "2026-10-02T14:03:11Z",
+  "callback": {
+    "url": "https://command.example.com/api/integrations/n8n/callback",
+    "token": "rt_synthetic_fixture_token_analyze_0005"
+  },
+  "job": {
+    "id": "01920000-0000-7000-8000-00000000j005",
+    "upwork_ref": null,
+    "source_url": null
+  },
+  "input": {
+    "listing_id": "01920000-0000-7000-8000-00000000l005",
+    "listing_text": "   "
+  }
+}

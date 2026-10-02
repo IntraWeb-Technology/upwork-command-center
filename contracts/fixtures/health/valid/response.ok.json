@@ -1,0 +1,10 @@
+{
+  "contract": "ujh.health.v1",
+  "status": "ok",
+  "checked_at": "2026-10-02T14:00:01Z",
+  "workflows": {
+    "analyze": "cc-analyze@2026-10-05.1",
+    "generate_proposal": "cc-generate-proposal@2026-10-05.1",
+    "post_callback": "cc-post-callback@2026-10-05.1"
+  }
+}

@@ -393,6 +393,16 @@ Error codes (closed enum): `INVALID_INPUT`, `UPSTREAM_UNAVAILABLE` (Gmail, model
 - `ujh.generate_proposal.v1`: input `{job: {title, job_category, budget_type, budget_min, budget_max, hourly_min, hourly_max, connect_cost}, listing_text, analysis: {client_problem, recommended_positioning, why_candidate_matches, positive_signals, red_flags, missing_information, analysis_summary}, base_version: {number, body} | null, instructions: string | null}`. These are exactly the fields the live strategist and writer prompts read from `upwork_jobs` today. Result `{body, strategy: <live plan schema>, models: {strategy, strategy_fallback_used, writer, writer_fallback_used, primary_error}, sanitizer: {em_dashes_removed}}`. Every Command Center request is an explicit owner request, so the workflow always uses the existing "explicitly requested" prompt branch and skips the eligibility and "already drafted" checks. Next.js assigns the version number, recomputes metrics, and rejects any body with an em dash as `MODEL_OUTPUT_INVALID`.
 - `ujh.health.v1`: synchronous echo used by the dashboard's workflow health indicator. Returns workflow versions. No LLM calls, no business-state changes. This is the only synchronous contract.
 
+### Implemented contracts (Contract Scaffolding milestone)
+The authoritative schemas now live in `src/contracts/` and are documented in [contracts.md](./contracts.md). The examples above are illustrative. Deltas from them, each grounded in the live exports:
+- A failed extraction is `{status: "failed", error, facts: null}`; the live workflow's empty `{}` facts are not carried over.
+- `usage` is omitted. It is always `null` on n8n 1.121, and a strict schema would otherwise freeze an unused field.
+- `models.*` are execution records `{model, provider, fallback_used, primary_error}` instead of flat labels. `models.analysis` is `null` when the hard filter failed.
+- Callbacks always carry `execution_ref`, which may be `null`.
+- The proposal request uses `listing {id, text}` and `analysis.id` for correlation. `analysis` may be `null`, because the live workflow allows explicit generation for jobs without an analysis.
+- Proposal `versions` carries `proposal_strategy_prompt` and `proposal_writer_prompt`. Today both hold the single `proposal_prompt_version` value.
+- `ujh.intake_scan.v1` is intentionally not defined yet.
+
 ### Authentication
 - **Next.js to n8n:** n8n Webhook node Header Auth credential, header `X-UJH-Token`. One secret, stored as an n8n credential and as `N8N_WEBHOOK_TOKEN` in Next.js.
 - **n8n to Next.js:** a different secret, `N8N_CALLBACK_TOKEN`, sent as a bearer token. Plus the **per-run callback token**: Next.js generates a random token per run, stores only its hash, and accepts a callback only if the hash matches and the run is not already terminal. This gives forgery and replay protection without asking n8n to compute HMACs over serialized JSON (fragile in n8n without Code nodes). This bearer plus per-run token design remains the approved model for this single-user system; no signing infrastructure is added.

@@ -1,0 +1,900 @@
+{
+  "title": "ujh.analyze.v1 callback",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "ujh.analyze.v1"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "callback_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 512
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "execution_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "const": "succeeded"
+        },
+        "versions": {
+          "type": "object",
+          "properties": {
+            "workflow": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "scoring": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "extraction_prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "analysis_prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "profile_hash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8,64}$"
+            },
+            "scoring_weights": {
+              "type": "object",
+              "properties": {
+                "technical_fit": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "budget_score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "client_quality": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "long_term_potential": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "communication_quality": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "competition_score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "strategic_fit": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "technical_fit",
+                "budget_score",
+                "client_quality",
+                "long_term_potential",
+                "communication_quality",
+                "competition_score",
+                "strategic_fit"
+              ],
+              "additionalProperties": false
+            },
+            "score_thresholds": {
+              "type": "object",
+              "properties": {
+                "priority": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10
+                },
+                "review": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10
+                }
+              },
+              "required": [
+                "priority",
+                "review"
+              ],
+              "additionalProperties": false
+            },
+            "hard_filter_rules": {
+              "type": "object",
+              "properties": {
+                "reject_if_us_excluded": {
+                  "type": "boolean"
+                },
+                "require_verified_payment": {
+                  "type": "boolean"
+                },
+                "reject_likely_scam": {
+                  "type": "boolean"
+                },
+                "refused_conditions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "min_listing_chars": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "reject_if_us_excluded",
+                "require_verified_payment",
+                "reject_likely_scam",
+                "refused_conditions",
+                "min_listing_chars"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "workflow",
+            "scoring",
+            "extraction_prompt",
+            "analysis_prompt",
+            "profile_hash",
+            "scoring_weights",
+            "score_thresholds",
+            "hard_filter_rules"
+          ],
+          "additionalProperties": false
+        },
+        "models": {
+          "type": "object",
+          "properties": {
+            "extraction": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "provider": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fallback_used": {
+                  "type": "boolean"
+                },
+                "primary_error": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "model",
+                "provider",
+                "fallback_used",
+                "primary_error"
+              ],
+              "additionalProperties": false
+            },
+            "analysis": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "model": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "provider": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fallback_used": {
+                      "type": "boolean"
+                    },
+                    "primary_error": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "model",
+                    "provider",
+                    "fallback_used",
+                    "primary_error"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "extraction",
+            "analysis"
+          ],
+          "additionalProperties": false
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "extraction": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "facts": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "posted_at": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "budget_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "fixed",
+                                "hourly"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "budget_min": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "budget_max": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hourly_min": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hourly_max": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "connect_cost": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "payment_verified": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "client_location": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "client_total_spend": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "client_hires": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "client_rating": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "proposal_count": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "proposals_min": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "proposals_max": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skills": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "job_category": {
+                          "type": "string",
+                          "enum": [
+                            "NEXTJS_REACT",
+                            "SENIOR_FULL_STACK",
+                            "API_INTEGRATION",
+                            "AI_AUTOMATION",
+                            "QUICK_FIX",
+                            "OTHER"
+                          ]
+                        },
+                        "excludes_us_freelancers": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "is_likely_scam": {
+                          "type": "boolean"
+                        },
+                        "scam_signals": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "refused_conditions_found": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "condition": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "evidence": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "condition",
+                              "evidence"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "listing_is_incomplete": {
+                          "type": "boolean"
+                        },
+                        "summary": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "posted_at",
+                        "budget_type",
+                        "budget_min",
+                        "budget_max",
+                        "hourly_min",
+                        "hourly_max",
+                        "connect_cost",
+                        "payment_verified",
+                        "client_location",
+                        "client_total_spend",
+                        "client_hires",
+                        "client_rating",
+                        "proposal_count",
+                        "proposals_min",
+                        "proposals_max",
+                        "skills",
+                        "job_category",
+                        "excludes_us_freelancers",
+                        "is_likely_scam",
+                        "scam_signals",
+                        "refused_conditions_found",
+                        "listing_is_incomplete",
+                        "summary"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "error",
+                    "facts"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "failed"
+                    },
+                    "error": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    "facts": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "error",
+                    "facts"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "hard_filter": {
+              "type": "object",
+              "properties": {
+                "pass": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^(?:US_FREELANCERS_EXCLUDED|PAYMENT_EXPLICITLY_UNVERIFIED|INCOMPLETE_LISTING|LIKELY_SCAM(?:: .+)?|REFUSED_CONDITION: .+)$"
+                  }
+                }
+              },
+              "required": [
+                "pass",
+                "reasons"
+              ],
+              "additionalProperties": false
+            },
+            "analysis": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "scores": {
+                      "type": "object",
+                      "properties": {
+                        "technical_fit": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "budget_score": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "client_quality": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "long_term_potential": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "communication_quality": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "competition_score": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        "strategic_fit": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        }
+                      },
+                      "required": [
+                        "technical_fit",
+                        "budget_score",
+                        "client_quality",
+                        "long_term_potential",
+                        "communication_quality",
+                        "competition_score",
+                        "strategic_fit"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "dimension_evidence": {
+                      "type": "object",
+                      "properties": {
+                        "technical_fit": {
+                          "type": "string"
+                        },
+                        "budget_score": {
+                          "type": "string"
+                        },
+                        "client_quality": {
+                          "type": "string"
+                        },
+                        "long_term_potential": {
+                          "type": "string"
+                        },
+                        "communication_quality": {
+                          "type": "string"
+                        },
+                        "competition_score": {
+                          "type": "string"
+                        },
+                        "strategic_fit": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "weighted_score": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "red_flag_penalty": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 3
+                    },
+                    "system_score": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "system_disposition": {
+                      "type": "string",
+                      "enum": [
+                        "PRIORITY",
+                        "REVIEW",
+                        "LOW"
+                      ]
+                    },
+                    "red_flags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "positive_signals": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "client_problem": {
+                      "type": "string"
+                    },
+                    "why_candidate_matches": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "missing_information": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "recommended_positioning": {
+                      "type": "string"
+                    },
+                    "client_summary": {
+                      "type": "string"
+                    },
+                    "analysis_summary": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scores",
+                    "dimension_evidence",
+                    "weighted_score",
+                    "red_flag_penalty",
+                    "system_score",
+                    "system_disposition",
+                    "red_flags",
+                    "positive_signals",
+                    "client_problem",
+                    "why_candidate_matches",
+                    "missing_information",
+                    "recommended_positioning",
+                    "client_summary",
+                    "analysis_summary"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "extraction",
+            "hard_filter",
+            "analysis"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "run_id",
+        "callback_token",
+        "completed_at",
+        "execution_ref",
+        "status",
+        "versions",
+        "models",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "ujh.analyze.v1"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "callback_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 512
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "execution_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "const": "failed"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "INVALID_INPUT",
+                "UPSTREAM_UNAVAILABLE",
+                "MODEL_ERROR",
+                "MODEL_OUTPUT_INVALID",
+                "TIMEOUT",
+                "INTERNAL"
+              ]
+            },
+            "stage": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "input",
+                    "config",
+                    "analysis",
+                    "scoring"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "stage",
+            "message",
+            "retryable"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "run_id",
+        "callback_token",
+        "completed_at",
+        "execution_ref",
+        "status",
+        "error"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

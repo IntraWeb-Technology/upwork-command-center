@@ -56,6 +56,12 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Contract JSON Schema is current
+        run: bun run contracts:check
+
+      - name: Contract tests and fixtures
+        run: bun run test:contracts
+
       - name: Unit and integration tests
         run: bun run test
 
