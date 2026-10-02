@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790914476972,
+      "tag": "0000_init_workflow_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790925102301,
+      "tag": "0001_jobs_and_analyses",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790925145377,
+      "tag": "0002_immutable_history",
+      "breakpoints": true
+    }
+  ]
+}

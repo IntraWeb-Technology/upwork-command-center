@@ -1,0 +1,18 @@
+{
+  "contract": "ujh.analyze.v1",
+  "run_id": "01920000-0000-7000-8000-00000000a001",
+  "requested_at": "2026-10-02T14:03:11Z",
+  "callback": {
+    "url": "https://command.example.com/api/integrations/n8n/callback",
+    "token": "rt_synthetic_fixture_token_analyze_0001"
+  },
+  "job": {
+    "id": "01920000-0000-7000-8000-00000000j001",
+    "upwork_ref": "~01aaaaaaaaaaaaaaaa",
+    "source_url": "https://www.upwork.com/jobs/~01aaaaaaaaaaaaaaaa"
+  },
+  "input": {
+    "listing_id": "01920000-0000-7000-8000-00000000l001",
+    "listing_text": "SYNTHETIC FIXTURE LISTING. We run an internal Next.js admin dashboard backed by PostgreSQL and need a senior engineer to add role-based reporting pages, fix slow queries, and write tests. Fixed budget between 3000 and 5000 USD. Payment verified, 18 previous hires."
+  }
+}

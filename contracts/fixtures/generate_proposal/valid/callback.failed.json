@@ -1,0 +1,14 @@
+{
+  "contract": "ujh.generate_proposal.v1",
+  "run_id": "01920000-0000-7000-8000-00000000p003",
+  "callback_token": "rt_synthetic_fixture_token_proposal_003",
+  "completed_at": "2026-10-02T14:12:05Z",
+  "execution_ref": "fixture-exec-2003",
+  "status": "failed",
+  "error": {
+    "code": "MODEL_OUTPUT_INVALID",
+    "stage": "validation",
+    "message": "Proposal draft shorter than 200 characters",
+    "retryable": true
+  }
+}

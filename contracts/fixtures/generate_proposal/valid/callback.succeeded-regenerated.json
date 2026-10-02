@@ -1,0 +1,45 @@
+{
+  "contract": "ujh.generate_proposal.v1",
+  "run_id": "01920000-0000-7000-8000-00000000p002",
+  "callback_token": "rt_synthetic_fixture_token_proposal_002",
+  "completed_at": "2026-10-02T16:22:10Z",
+  "execution_ref": "fixture-exec-2002",
+  "status": "succeeded",
+  "versions": {
+    "workflow": "cc-generate-proposal@2026-10-05.1",
+    "proposal_strategy_prompt": "proposal-v4",
+    "proposal_writer_prompt": "proposal-v4",
+    "profile_hash": "a41c9e02"
+  },
+  "models": {
+    "strategy": {
+      "model": "fixture-strategy-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    },
+    "writer": {
+      "model": "fixture-writer-fallback-model",
+      "provider": null,
+      "fallback_used": true,
+      "primary_error": "writer: synthetic primary model timeout"
+    }
+  },
+  "result": {
+    "body": "Synthetic fixture proposal, regenerated. Slow queries are usually the first thing standing between a dashboard and new reports, so that is where I would start. I have tuned PostgreSQL behind several production Next.js dashboards and would then add the role-based reporting pages with tests.\n\nWhich Next.js version is the dashboard on today?",
+    "strategy": {
+      "client_real_problem": "Reporting requests outpace the internal team.",
+      "proposal_angle": "Query performance first, then new reporting pages.",
+      "opening_hook": "Slow queries block new reports.",
+      "relevant_experience": ["Tuned PostgreSQL behind production dashboards"],
+      "key_points": ["Profile slow queries first", "Role-based reporting pages"],
+      "technical_details": ["PostgreSQL query plans"],
+      "recommended_case_study": "none",
+      "include_case_study_link": false,
+      "recommended_bid_strategy": "Bid near the middle of the stated range.",
+      "questions_to_client": ["Which Next.js version is the dashboard on today?"],
+      "risk_to_address": "Unknown legacy code quality."
+    },
+    "sanitizer": { "em_dashes_removed": 2 }
+  }
+}

@@ -3,7 +3,10 @@ import {
   IconAlertCircle,
   IconAlertTriangle,
   IconArrowRight,
+  IconBan,
   IconBell,
+  IconBriefcase,
+  IconRefresh,
   IconBold,
   IconBox,
   IconBrandGithub,
@@ -219,5 +222,8 @@ export const Icons = {
   slash: IconSlash,
   calendar: IconCalendar,
   galleryVerticalEnd: IconStack2,
-  moreHorizontal: IconDots
+  moreHorizontal: IconDots,
+  jobs: IconBriefcase,
+  refresh: IconRefresh,
+  ban: IconBan
 };

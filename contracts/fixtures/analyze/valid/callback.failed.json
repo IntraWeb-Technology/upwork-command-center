@@ -1,0 +1,14 @@
+{
+  "contract": "ujh.analyze.v1",
+  "run_id": "01920000-0000-7000-8000-00000000a003",
+  "callback_token": "rt_synthetic_fixture_token_analyze_0003",
+  "completed_at": "2026-10-02T14:05:40Z",
+  "execution_ref": "fixture-exec-1003",
+  "status": "failed",
+  "error": {
+    "code": "MODEL_ERROR",
+    "stage": "analysis",
+    "message": "Primary and fallback models failed",
+    "retryable": true
+  }
+}

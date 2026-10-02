@@ -1,0 +1,83 @@
+{
+  "contract": "ujh.analyze.v1",
+  "run_id": "01920000-0000-7000-8000-00000000a002",
+  "callback_token": "rt_synthetic_fixture_token_analyze_0002",
+  "completed_at": "2026-10-02T15:10:45Z",
+  "execution_ref": "fixture-exec-1002",
+  "status": "succeeded",
+  "versions": {
+    "workflow": "cc-analyze@2026-10-05.1",
+    "scoring": "score-v1",
+    "extraction_prompt": "extract-v1",
+    "analysis_prompt": "analysis-v1",
+    "profile_hash": "a41c9e02",
+    "scoring_weights": {
+      "technical_fit": 0.25,
+      "budget_score": 0.15,
+      "client_quality": 0.15,
+      "long_term_potential": 0.15,
+      "communication_quality": 0.1,
+      "competition_score": 0.1,
+      "strategic_fit": 0.1
+    },
+    "score_thresholds": { "priority": 8, "review": 6 },
+    "hard_filter_rules": {
+      "reject_if_us_excluded": true,
+      "require_verified_payment": true,
+      "reject_likely_scam": true,
+      "refused_conditions": ["unpaid test or unpaid trial work"],
+      "min_listing_chars": 120
+    }
+  },
+  "models": {
+    "extraction": {
+      "model": "fixture-extraction-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    },
+    "analysis": null
+  },
+  "result": {
+    "extraction": {
+      "status": "ok",
+      "error": null,
+      "facts": {
+        "title": "Synthetic: quick website fix",
+        "posted_at": null,
+        "budget_type": null,
+        "budget_min": null,
+        "budget_max": null,
+        "hourly_min": null,
+        "hourly_max": null,
+        "connect_cost": null,
+        "payment_verified": null,
+        "client_location": null,
+        "client_total_spend": null,
+        "client_hires": null,
+        "client_rating": null,
+        "proposal_count": null,
+        "proposals_min": null,
+        "proposals_max": null,
+        "skills": [],
+        "job_category": "QUICK_FIX",
+        "excludes_us_freelancers": null,
+        "is_likely_scam": false,
+        "scam_signals": [],
+        "refused_conditions_found": [
+          {
+            "condition": "unpaid test or unpaid trial work",
+            "evidence": "Synthetic: complete a free sample task first."
+          }
+        ],
+        "listing_is_incomplete": true,
+        "summary": "Synthetic listing with almost no detail."
+      }
+    },
+    "hard_filter": {
+      "pass": false,
+      "reasons": ["REFUSED_CONDITION: unpaid test or unpaid trial work", "INCOMPLETE_LISTING"]
+    },
+    "analysis": null
+  }
+}

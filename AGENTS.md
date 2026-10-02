@@ -4,21 +4,44 @@ This file provides essential information for AI coding agents working on this pr
 
 ---
 
+## Upwork Command Center Rules
+
+These rules take precedence over the starter conventions below.
+
+1. This application is the UI/control plane for the Upwork Job Hunter Automation system.
+2. n8n remains the workflow/orchestration engine.
+3. Do not duplicate workflow/business logic in the frontend unless explicitly required.
+4. Communicate with automation services through defined APIs/webhooks. Do not couple the dashboard to individual n8n nodes.
+5. Secrets must remain server-side.
+6. Do not introduce Upwork browser automation, scraping, automated proposal submission, or any other behavior that risks violating Upwork restrictions.
+7. The application is currently single-user.
+8. Do not introduce multi-tenancy, organizations, team management, subscriptions, or SaaS billing unless explicitly requested.
+9. Prefer incremental changes over large rewrites.
+10. Before changing architecture, inspect the existing implementation and explain the proposed change.
+11. Keep TypeScript strict. Avoid `any` unless technically unavoidable, and document why when used.
+12. Preserve accessibility and responsive behavior.
+13. Do not introduce unnecessary dependencies.
+14. Do not use em dashes in user-facing generated copy or proposal-generation prompts.
+
+The sections below are inherited from the upstream starter and describe its existing conventions. Where they mention organizations, billing, or multi-tenant features, rule 8 applies.
+
+---
+
 ## Project Overview
 
-**Next.js Admin Dashboard Starter** is a production-ready admin dashboard template built with:
+**Upwork Command Center** is built on the Next.js Admin Dashboard Starter with:
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript 5.7
 - **Styling**: Tailwind CSS v4
 - **UI Components**: shadcn/ui (New York style)
-- **Authentication**: Clerk (with Organizations/Billing support)
+- **Authentication**: Clerk (authentication only; no Organizations or Billing)
 - **Error Tracking**: Sentry
 - **Charts**: Recharts
 - **Containerization**: Docker (Node.js & Bun Dockerfiles)
 - **Package Manager**: Bun (preferred) or npm
 
-The project follows a feature-based folder structure designed for scalability in SaaS applications, internal tools, and admin panels.
+The project follows a feature-based folder structure.
 
 ---
 
@@ -39,7 +62,6 @@ The project follows a feature-based folder structure designed for scalability in
 
 ### State Management
 
-- Zustand 5.x for local UI state in the stateful demo features
 - Nuqs for URL search params state management
 - TanStack Form + Zod for form handling (`createFormHook` + shadcn `Field`-anatomy components)
 
@@ -53,10 +75,7 @@ The project follows a feature-based folder structure designed for scalability in
 
 ### Authentication & Authorization
 
-- Clerk for authentication and user management
-- Clerk Organizations for multi-tenant workspaces
-- Clerk Billing for subscription management (B2B)
-- Client-side RBAC for navigation visibility
+- Clerk for authentication (single user)
 
 ### Data & APIs
 
@@ -70,8 +89,8 @@ The project follows a feature-based folder structure designed for scalability in
 
 ### Development Tools
 
-- ESLint 8.x with Next.js core-web-vitals config
-- Prettier 3.x with prettier-plugin-tailwindcss
+- OxLint (`.oxlintrc.json`)
+- Oxfmt with Tailwind class sorting (`.oxfmtrc.json`)
 - Husky for git hooks
 - lint-staged for pre-commit formatting
 
@@ -86,13 +105,6 @@ The project follows a feature-based folder structure designed for scalability in
 │   ├── dashboard/         # Dashboard routes
 │   │   ├── overview/      # Parallel routes (@area_stats, @bar_stats, etc.)
 │   │   ├── product/       # Product management pages
-│   │   ├── kanban/        # Kanban board page
-│   │   ├── chat/          # Messaging page
-│   │   ├── ai-chat/       # AI chat streaming demo
-│   │   ├── notifications/ # Notifications page
-│   │   ├── workspaces/    # Organization management
-│   │   ├── billing/       # Subscription billing
-│   │   ├── exclusive/     # Pro plan feature example
 │   │   └── profile/       # User profile
 │   ├── api/               # API routes (if any)
 │   ├── layout.tsx         # Root layout with providers
@@ -103,7 +115,7 @@ The project follows a feature-based folder structure designed for scalability in
 ├── components/
 │   ├── ui/                # shadcn/ui components (50+ components)
 │   ├── layout/            # Layout components (sidebar, header, etc.)
-│   ├── forms/             # Field components (shadcn TanStack Form anatomy) + demos
+│   ├── forms/             # Field components (shadcn TanStack Form anatomy)
 │   ├── themes/            # Theme system components
 │   ├── kbar/              # Command+K search bar
 │   ├── icons.tsx          # Icon registry
@@ -123,19 +135,13 @@ The project follows a feature-based folder structure designed for scalability in
 │   ├── users/             # User management (React Query + nuqs)
 │   │   ├── api/           # Same pattern: types.ts → service.ts → queries.ts
 │   │   └── components/    # Listing, table components
-│   ├── react-query-demo/  # React Query showcase (Pokemon API)
-│   ├── kanban/            # Kanban board with dnd-kit
-│   ├── chat/              # Messaging UI (conversations, bubbles, composer)
-│   ├── ai-chat/           # Scripted useChat streaming demo
-│   ├── notifications/     # Notification center & store
 │   └── profile/           # Profile management
 │
 ├── config/                # Configuration files
-│   ├── nav-config.ts      # Navigation with RBAC
+│   ├── nav-config.ts      # Navigation (sidebar + Cmd+K)
 │   └── ...
 │
 ├── hooks/                 # Custom React hooks
-│   ├── use-nav.ts         # RBAC navigation filtering
 │   ├── use-data-table.ts  # Data table state
 │   └── ...
 │
@@ -154,12 +160,7 @@ The project follows a feature-based folder structure designed for scalability in
 
 /docs                      # Documentation
 │   ├── clerk_setup.md     # Clerk configuration guide
-│   ├── nav-rbac.md        # Navigation RBAC documentation
 │   └── themes.md          # Theme customization guide
-
-/scripts                   # Dev tooling
-    ├── cleanup.js         # Feature removal, run via `bun run cleanup` (templates in cleanup-templates/, typechecked)
-    └── cleanup-templates/ # Replacement files cleanup.js copies into the repo
 
 Dockerfile                 # Node.js production Dockerfile
 Dockerfile.bun             # Bun production Dockerfile
@@ -184,14 +185,14 @@ bun run build
 bun run start
 
 # Linting
-bun run lint         # Run ESLint
-bun run lint:fix     # Fix ESLint issues and format
+bun run lint         # Run OxLint
+bun run lint:fix     # Fix lint issues and format
 bun run lint:strict  # Zero warnings tolerance
 
 bun run typecheck    # tsc --noEmit
 
 # Formatting
-bun run format       # Format with Prettier
+bun run format       # Format with Oxfmt
 bun run format:check # Check formatting
 
 # Git hooks
@@ -213,8 +214,8 @@ CLERK_SECRET_KEY=sk_...
 # Redirect URLs
 NEXT_PUBLIC_CLERK_SIGN_IN_URL="/auth/sign-in"
 NEXT_PUBLIC_CLERK_SIGN_UP_URL="/auth/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/dashboard/overview"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard/overview"
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL="/dashboard/overview"
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL="/dashboard/overview"
 ```
 
 ### Optional for Error Tracking (Sentry)
@@ -227,7 +228,7 @@ SENTRY_AUTH_TOKEN=sntrys_...
 NEXT_PUBLIC_SENTRY_DISABLED="false"  # Set to "true" to disable in dev
 ```
 
-**Note**: Clerk supports "keyless mode" — run `npx clerk@latest init` to provision a development instance in seconds (no account needed; keys are written to `.env.local`).
+**Note**: Use `clerk env pull` to write keys (see `docs/clerk_setup.md`). Avoid `clerk init` on this project; it scaffolds duplicate providers and routes.
 
 ---
 
@@ -240,7 +241,7 @@ NEXT_PUBLIC_SENTRY_DISABLED="false"  # Set to "true" to disable in dev
 - Prefer interface over type for object definitions
 - Use `@/*` alias for imports from src
 
-### Formatting (Prettier)
+### Formatting (Oxfmt, `.oxfmtrc.json`)
 
 ```json
 {
@@ -253,12 +254,9 @@ NEXT_PUBLIC_SENTRY_DISABLED="false"  # Set to "true" to disable in dev
 }
 ```
 
-### ESLint Rules
+### Linting
 
-- `@typescript-eslint/no-unused-vars`: warn
-- `no-console`: warn
-- `react-hooks/exhaustive-deps`: warn
-- `import/no-unresolved`: off (handled by TypeScript)
+OxLint, configured in `.oxlintrc.json`.
 
 ### Component Conventions
 
@@ -303,11 +301,9 @@ See `docs/themes.md` for detailed theming guide.
 
 ---
 
-## Navigation & RBAC System
+## Navigation
 
-### Navigation Configuration
-
-Navigation is organized into groups in `src/config/nav-config.ts`:
+Navigation is organized into groups in `src/config/nav-config.ts` and is used by both the sidebar and the Cmd+K bar:
 
 ```typescript
 import { NavGroup } from '@/types';
@@ -321,65 +317,23 @@ export const navGroups: NavGroup[] = [
         url: '/dashboard/overview',
         icon: 'dashboard',
         shortcut: ['d', 'd'],
-        items: [],
-        access: { requireOrg: true } // RBAC check
+        items: []
       }
     ]
   }
 ];
 ```
 
-### Access Control Properties
-
-- `requireOrg: boolean` - Requires active organization
-- `permission: string` - Requires specific permission
-- `role: string` - Requires specific role
-- `plan: string` - Requires specific subscription plan
-- `feature: string` - Requires specific feature
-
-### Client-Side Filtering
-
-The `useFilteredNavItems()` hook in `src/hooks/use-nav.ts` filters navigation client-side using Clerk's `useOrganization()` and `useUser()` hooks. This is for UX only - actual security checks must happen server-side.
+There is no role- or plan-based navigation filtering. The app is single-user.
 
 ---
 
 ## Authentication Patterns
 
-### Protected Routes
-
-Dashboard routes use Clerk's middleware pattern. Pages that require organization:
-
-```tsx
-import { auth } from '@clerk/nextjs';
-import { redirect } from 'next/navigation';
-
-export default async function Page() {
-  const { orgId } = await auth();
-  if (!orgId) redirect('/dashboard/workspaces');
-  // ...
-}
-```
-
-### Plan/Feature Protection
-
-Use Clerk's `<Protect>` component for client-side:
-
-```tsx
-import { Protect } from '@clerk/nextjs';
-
-<Protect plan='pro' fallback={<UpgradePrompt />}>
-  <PremiumContent />
-</Protect>;
-```
-
-Use `has()` function for server-side checks:
-
-```tsx
-import { auth } from '@clerk/nextjs';
-
-const { has } = await auth();
-const hasFeature = has({ feature: 'premium_access' });
-```
+- `src/proxy.ts` runs `clerkMiddleware()` to attach auth context to every request.
+- `src/app/dashboard/layout.tsx` protects all dashboard routes with `auth.protect()`.
+- Route handlers and server actions that touch automation services must check `await auth()` server-side.
+- Do not assume a user has an email address (`user.emailAddresses[0]` may be undefined).
 
 ---
 
@@ -581,41 +535,6 @@ Both use `output: 'standalone'` in `next.config.ts`. Pass `NEXT_PUBLIC_*` vars a
 
 ---
 
-## Feature Cleanup System
-
-A single `scripts/cleanup.js` file handles removal of optional features:
-
-```bash
-# Interactive mode — prompts for each feature
-node scripts/cleanup.js --interactive
-
-# Remove specific features
-node scripts/cleanup.js clerk           # Remove auth/org/billing
-node scripts/cleanup.js kanban          # Remove kanban board
-node scripts/cleanup.js chat            # Remove messaging UI
-node scripts/cleanup.js ai-chat         # Remove AI chat demo
-node scripts/cleanup.js notifications   # Remove notification center
-node scripts/cleanup.js themes          # Keep one theme, remove rest
-node scripts/cleanup.js sentry          # Remove error tracking
-
-# Remove multiple at once
-node scripts/cleanup.js kanban chat notifications
-
-# Preview without changing files
-node scripts/cleanup.js --dry-run kanban
-
-# List all features
-node scripts/cleanup.js --list
-```
-
-**Safety**: Script requires git repository with at least one commit. Use `--force` to skip.
-
-Replacement files live in `scripts/cleanup-templates/` as real `.ts`/`.tsx` files typechecked by `tsc` and `next build`, so template rot fails loudly instead of shipping broken code.
-
-After cleanup, delete `scripts/cleanup.js` and `scripts/cleanup-templates/` — the dev server message auto-cleans on next start.
-
----
-
 ## Icon System
 
 **All icons come from a single source: `src/components/icons.tsx`.**
@@ -666,10 +585,6 @@ export const Icons = {
 | Text formatting | `bold`, `italic`, `underline`, `text`                                         |
 | Data / Charts   | `trendingUp`, `trendingDown`, `eyeOff`, `adjustments`                         |
 
-### Icon Showcase Page
-
-Browse all available icons at `/dashboard/elements/icons` — a searchable grid of every icon in the registry.
-
 ### Why This Pattern?
 
 - **Single source of truth** — swap icon packages by editing one file
@@ -719,20 +634,14 @@ See "Theming System" section above or `docs/themes.md`.
 - Ensure using Tailwind CSS v4 syntax (`@import 'tailwindcss'`)
 - Check `postcss.config.js` uses `@tailwindcss/postcss`
 
-**Clerk keyless mode popup**
+**Clerk `Missing publishableKey` error**
 
-- Run `npx clerk@latest init` to provision a dev instance in seconds (no account needed)
-- It writes keys to `.env.local`; later you can claim application or set env variables
+- Run `clerk env pull` to write keys to `.env.local` (see `docs/clerk_setup.md`)
 
 **Theme not applying**
 
 - Check theme name matches in CSS `[data-theme]` and `theme.config.ts`
 - Verify theme CSS is imported in `theme.css`
-
-**Navigation items not showing**
-
-- Check `access` property in nav config
-- Verify user has required org/permission/role
 
 ---
 
