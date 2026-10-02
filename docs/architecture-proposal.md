@@ -1,6 +1,8 @@
 # Upwork Command Center Architecture Proposal
 
-Status: **Direction approved; contracts not frozen.** Nothing in this document is implemented. Every JSON payload, endpoint, and table below is a design example for review, not a committed contract.
+Status: **Architecture approved on October 1, 2026. Implementation is in progress incrementally, milestone by milestone (Section 13). The n8n production workflows (W00 to W06, W99) remain unchanged.** Contract payloads below are design examples; each contract is frozen only when its Zod schema and fixtures are committed in the Contract Scaffolding milestone. The approved n8n migration decisions are recorded in [n8n-refactor-plan.md](./n8n-refactor-plan.md#approved-decisions-october-1-2026).
+
+> **Operational safety rule: DO NOT deploy regenerated W01, W02, or W03 workflows until generator drift has been reconciled.** The live workflows differ from their generators; a regeneration using the current generators may silently change which models the existing Slack system executes. See the refactor plan, Section 16.
 
 Inputs reviewed: this repository (`development` branch), and the existing n8n suite in `upwork-proposal-system/n8n/upwork-job-hunter` (README, user guide, workflow exports W00 to W99, generators, config seed). Contract shapes in Sections 4 and 5 were corrected against the live workflow exports; the evidence and the n8n migration plan are in [n8n-refactor-plan.md](./n8n-refactor-plan.md).
 
@@ -24,7 +26,7 @@ These are places where the brief, or the current n8n design, conflicts with the 
 2. **There is no Gmail intake today.** All current intake is manual paste (Slack or webhook). "Check Upwork Alerts" is a net-new n8n workflow plus an unknown email format. It should **not** be the first vertical slice. The paste, analyze, propose, submit path reuses proven n8n logic and replaces daily Slack use sooner.
 3. **A separate `proposals` parent table adds little.** One Upwork job gets at most one application. The distinction that matters is between an immutable **proposal version** and the **application** (the real-world submission that references exactly one version and accumulates outcomes). Section 4 models it that way.
 4. **The "approve / READY_TO_SUBMIT" step is redundant** in a UI where "Mark submitted" requires choosing the exact version. Recommend dropping it.
-5. **Callbacks need an HTTP Request node in n8n.** The current suite has a self-imposed "0 HTTP Request nodes" rule. Asynchronous results require at least one shared callback sub-workflow. This needs your approval.
+5. **Callbacks need an HTTP Request node in n8n.** The current suite has a self-imposed "0 HTTP Request nodes" rule. Asynchronous results require at least one shared callback sub-workflow. Approved on October 1, 2026: the old rule does not apply to the Command Center integration.
 6. **Clerk alone does not make the app single-user.** If sign-ups are open, any Clerk account can reach the dashboard. Add an explicit owner check (Section 7).
 7. **The reference route handlers (`/api/products`, `/api/users`) perform no auth check.** `src/proxy.ts` only attaches auth context; protection lives in the dashboard layout. New route handlers must authenticate themselves.
 8. **The current n8n webhooks (`/webhook/upwork/*`) are unauthenticated** (confirmed in the W01 export: the Webhook node has no authentication set). New Command Center-facing webhooks must use header auth.
@@ -712,7 +714,7 @@ Vertical slices, each shippable and replacing part of the Slack workflow. Order 
 
 1. **Foundation.** Node 24 alignment, Vitest and Playwright scaffolding, GitHub Actions pipeline, server env schema, `requireOwner()` guard, Sentry enabled for server errors.
 2. **Contract scaffolding.** Zod schemas and JSON fixtures for `ujh.analyze.v1`, `ujh.generate_proposal.v1`, and `ujh.health.v1`, derived from the live parser schemas documented in the refactor plan. No n8n changes.
-3. **Reconcile n8n generator drift (n8n side, needs approval).** Make the generators match the live model choices (or deliberately change them) before any generator-based n8n deployment, so new workflows do not silently change the Slack system's models.
+3. **Reconcile n8n generator drift (n8n side).** The deployed Slack workflows are the behavioral source of truth. Make the generators reproduce the live workflows intentionally before any generator-based n8n deployment, so new work does not silently change the Slack system's models. Do not correct the live model configuration as part of this step.
 4. **Persistence.** Provision Postgres, add Drizzle, first migration: `jobs`, `job_listings`, `job_analyses`, `analysis_scores`, `job_events`, `workflow_runs`, `config_snapshots`.
 5. **Run engine.** n8n client with injectable transport, callback route (tokens, size limit), run polling endpoint with derived timeout, fake n8n, `ujh.health.v1` working end to end against real n8n (walking skeleton that proves auth, callback, correlation).
 6. **Analyze slice.** New parallel n8n workflows (shared callback sub-workflow, then `UJH-CC Analyze`, stateless, built from the same generator code as W01 extraction and W02). UI: create job from paste, Analyze, live run state, analysis view, override, decline. The Slack workflows are untouched.
@@ -727,7 +729,7 @@ Vertical slices, each shippable and replacing part of the Slack workflow. Order 
 
 ## 14. Risks and Open Questions
 
-### Decisions that can be made now (recommended as stated)
+### Approved (October 1, 2026)
 - Command Center is the only system of record; no dual writes; n8n gets no database access.
 - Async run model with callback and polling; no SSE or WebSockets.
 - Immutable analyses and proposal versions; `applications` references the exact version.
@@ -749,25 +751,30 @@ Questions 1 to 4, 7, 8, and 11 from the original list were answered from the wor
 6. Volume and quality of existing `upwork_jobs` and `upwork_events` data (real versus `test_fixture`). Cannot be determined from local files; requires a read-only export.
 7. Whether token usage and cost can be returned now (README says no on 1.121) or after an n8n upgrade.
 
-### Questions requiring your approval
-1. Command Center as sole system of record, with n8n refactored to stateless request/response workflows (and n8n Data Tables frozen for Command Center-originated jobs).
-2. Adding new Command Center-facing n8n workflows alongside the Slack ones during transition, versus modifying the existing ones in place.
-3. Allowing HTTP Request nodes in n8n for result callbacks (one shared sub-workflow).
-4. Slack's future: retire Slack intake after the proposal slice, keep it as notifications only, or keep both entry points (keeping both would require Slack intake to go through the Command Center API).
-5. Data model choices: no separate `proposals` parent (versions plus `applications`), stage list in Section 4, dropping the "approve / ready to submit" step.
-6. Proposal generation is always explicit (no automatic draft for PRIORITY jobs), at least initially.
-7. Implementation order with paste-and-analyze before Gmail intake.
-8. Owner enforcement: `OWNER_CLERK_USER_ID` check plus restricted Clerk sign-ups.
-9. Drizzle ORM and the Postgres provider.
-10. Deployment target (Vercel or the existing VPS/Docker), which affects Postgres hosting, connection pooling, and callback URL.
-11. Node 24 standardization.
-12. Whether to import historical n8n Data Table records.
-13. Enabling Sentry (server-side at minimum) in the foundation milestone.
-14. Development callback strategy: tunnel to real n8n, fake n8n only, or a separate n8n test environment.
+### Previously open questions: approved with the architecture (October 1, 2026)
+- Command Center as sole system of record, with n8n refactored to stateless request/response workflows (n8n Data Tables are not written for Command Center-originated jobs).
+- New Command Center-facing n8n workflows alongside the Slack ones; W00 to W06 and W99 untouched until the replacement is proven.
+- HTTP Request nodes in n8n for result callbacks, centralized in one shared callback workflow.
+- Data model choices: no separate `proposals` parent (versions plus `applications`), the stage list in Section 4, dropping the "approve / ready to submit" step.
+- Proposal generation is always explicit (no automatic draft for PRIORITY jobs), at least initially.
+- Implementation order with paste-and-analyze before Gmail intake.
+- Owner enforcement: `OWNER_CLERK_USER_ID` check plus restricted Clerk sign-ups.
+- Drizzle ORM.
+- Node 24 standardization.
+- Historical n8n Data Table import: **deferred**; inspected read-only later only if meaningful production history exists.
+- Sentry enabled server-side in the foundation milestone (inactive without a DSN).
+
+The remaining n8n decisions (model drift handling, error handling, callback allowlist, execution retention) are recorded in the refactor plan's approved decisions.
+
+### Still open (decide before the milestone that needs them)
+1. Slack's future: retire Slack intake after the proposal slice, keep it as notifications only, or keep both entry points (keeping both would require Slack intake to go through the Command Center API).
+2. Postgres provider (before the Persistence milestone).
+3. Deployment target (Vercel or the existing VPS/Docker), which affects Postgres hosting, connection pooling, and callback URL.
+4. Development callback strategy: tunnel to real n8n, fake n8n only, or a separate n8n test environment (before the Run engine milestone).
 
 ### Risks
 - **n8n refactor size.** Converting state-loading workflows to stateless ones is the critical path and is outside this repository. Mitigated by building parallel stateless workflows instead of rewriting the Slack ones.
-- **Generator drift.** The live W01 and W02 model nodes differ from what the generators produce. Any regeneration and redeploy would silently change the Slack system's models. Must be reconciled before n8n work (refactor plan, Section 16).
+- **Generator drift.** The live W01 and W02 model nodes differ from what the generators produce. Any regeneration and redeploy would silently change the Slack system's models. **Do not deploy regenerated W01, W02, or W03 until drift is reconciled** (refactor plan, Section 16).
 - **Unreliable historical model metadata.** Stored n8n `extraction_model` and `analysis_model` values do not reflect the models actually used; imported history must not be trusted for model comparisons.
 - **Small samples.** A single freelancer produces tens of submissions per month; most learning observations will be `insufficient` or `weak` for months. The UI must say so plainly.
 - **Alert email format drift.** Upwork can change its email template at any time; the parser lives in n8n and needs fixtures from real emails.

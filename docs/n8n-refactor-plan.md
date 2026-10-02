@@ -1,6 +1,21 @@
 # n8n Refactor Plan: Validating the Architecture Against the Real Workflows
 
-Status: **Analysis only, proposed, not approved.** Nothing here has been implemented, and no n8n workflow, Data Table, credential, or configuration was modified while producing it.
+Status: **Approved on October 1, 2026 (decisions below). Not implemented.** No n8n workflow, Data Table, credential, generator, or configuration has been modified. The production Slack workflows (W00 to W06, W99) remain unchanged.
+
+> **OPERATIONAL SAFETY RULE: DO NOT deploy regenerated W01, W02, or W03 workflows until generator drift has been reconciled.**
+> The live workflows differ from their generators (Section 16, risk 1). A regeneration using the current generators may silently change which models the existing Slack system executes. The deployed workflows are the behavioral source of truth until the generators are reconciled to reproduce them intentionally.
+
+## Approved decisions (October 1, 2026)
+
+These are final unless implementation evidence proves one technically impossible.
+
+1. **Model drift.** The currently deployed Slack workflows are the behavioral source of truth for the existing Slack system. Do not regenerate or deploy W01, W02, or W03, and do not correct the live model configuration, until the generators have first been reconciled to reproduce the live workflows intentionally. Future Command Center workflows use explicit, versioned model configuration so that the model recorded as executed equals the model that actually executed.
+2. **Parallel Command Center workflows.** `UJH-CC Analyze`, `UJH-CC Generate Proposal`, and `UJH-CC Post Callback` are created alongside the Slack workflows. W00 to W06 and W99 remain untouched until the Command Center replacement is proven.
+3. **HTTP Request callback.** The "0 HTTP Request nodes" convention does not apply to the Command Center integration. One centralized shared callback mechanism is allowed.
+4. **Command Center error handling.** W99 is **not** responsible for Command Center workflow state. CC workflows explicitly catch expected execution failures while they still hold `run_id`, the callback URL, the callback token, and the contract, and call the shared callback workflow with `status: failed`. W99 may remain a secondary operational and Slack error reporter.
+5. **Callback allowlist.** n8n execution configuration gains `cc_callback_url_prefixes`; the callback mechanism refuses destinations outside it.
+6. **Execution persistence for CC workflows.** Successful executions are not retained by default. Failed executions may be retained for debugging, with short retention. Callback tokens must not remain useful after terminal completion or expiration.
+7. **Historical data import: deferred.** No importer now. Existing Data Table history is inspected read-only later, only if there is evidence of meaningful production history.
 
 Companion to [architecture-proposal.md](./architecture-proposal.md).
 
@@ -28,7 +43,7 @@ Not accessed, by design: the live n8n instance, its API, executions, and Data Ta
 - **The pure logic is portable.** Identity derivation, hard filters, scoring, disposition, and the em dash sanitizer are deterministic expressions in Set nodes. The LLM steps are self-contained chains or agents with Structured Output Parsers. Everything the Command Center needs can be produced without touching Data Tables.
 - **The live workflows have drifted from their generators.** The live W01 extraction model and W02 analysis model are hardcoded to `claude-sonnet-5-5`, and the W02 fallback to `chat-latest`, while the generators use config expressions. The recorded model metadata (`extraction_model`, `analysis_model`) is taken from config keys and therefore does not describe the models that actually ran. Regenerating and redeploying from the generators would silently change the Slack system's models.
 - **Several architecture contract assumptions were wrong** and are now corrected in the architecture document: field names (`client_location`, `budget_score`, `competition_score`), the analysis output (no proposal strategy, strengths, risks, or reasoning; the real fields are positive signals, red flags, client problem, positioning, and summaries), the real scoring weights, and the error-code list.
-- **Recommended migration: build parallel Command Center-facing workflows** (`UJH-CC Analyze`, `UJH-CC Generate Proposal`, `UJH-CC Post Callback`) from the same generator code, reading only `upwork_config`. W00 to W06 and W99 remain untouched, so the Slack system keeps running until the Command Center replacement is proven.
+- **Approved migration: build parallel Command Center-facing workflows** (`UJH-CC Analyze`, `UJH-CC Generate Proposal`, `UJH-CC Post Callback`) from the same generator code, reading only `upwork_config`. W00 to W06 and W99 remain untouched, so the Slack system keeps running until the Command Center replacement is proven.
 - **The error workflow cannot correlate failures to runs** because the n8n Error Trigger does not expose the failed execution's input. Expected failures must be handled inside the CC workflows with failure callbacks; unexpected crashes are covered by the run deadline.
 - **No execution-duration data exists locally.** Requires measurement from the live n8n instance.
 - **Existing Data Table contents cannot be assessed locally.** The evidence suggests they are mostly test fixtures.
@@ -232,7 +247,7 @@ Classification: **A** move to Command Center, **B** remain n8n, **C** transition
 | W05 | `upwork_jobs`, `upwork_events` | R/W | Outcomes | Outcome state | CC `applications`, `job_events` | A |
 | W06 | `upwork_config`, `upwork_jobs`, `upwork_events` | R/W | Performance analysis | Learning | CC learning tables plus an n8n interpretation workflow | D |
 | W99 | `upwork_config` | R | Slack channel | Alert routing | n8n | B |
-| W99 | `upwork_events` | R/W | `Find Recent Alert`, `Append ERROR Event` | Alert throttling and error log | n8n (operational, not business state) | D |
+| W99 | `upwork_events` | R/W | `Find Recent Alert`, `Append ERROR Event` | Alert throttling and error log | n8n (operational, not business state; approved decision 4) | B |
 
 For the Slack path, every A and C row keeps working unchanged during migration. "Future owner" applies to jobs that originate in the Command Center.
 
@@ -354,9 +369,9 @@ Rules for the new workflows:
 
 ## 11. Migration Strategy
 
-### Recommendation: parallel workflows, generator-level reuse
+### Approved: parallel workflows, generator-level reuse
 
-1. **Reconcile generator drift first** (Section 16). Decide whether the hardcoded live models are intended, then make the generators produce exactly the live workflows (verified by diffing a fresh generator output against `suite/workflows/*.json`). Until this is done, no generator-based deploy should happen.
+1. **Reconcile generator drift first** (Section 16, approved decision 1). The live workflows are the source of truth: make the generators produce exactly the live workflows (verified by diffing a fresh generator output against `suite/workflows/*.json`). Until this is done, no generator-based deploy should happen.
 2. **Refactor generator code, not runtime workflows.** Move the node builders for extraction, hard filters, analysis, scoring, strategist, writer, and sanitizer into shared functions in `suite/build/lib.js` (or a new module). W01, W02, and W03 generators call them and must produce byte-identical output to the reconciled workflows; the new CC generators call the same functions.
 3. **Create three new workflows:** `UJH-CC Post Callback`, `UJH-CC Analyze`, `UJH-CC Generate Proposal`. New webhook paths under `ujh-cc/`. Deployed inactive first, tested with fixtures, then activated.
 4. **Leave W00 to W06 and W99 untouched at runtime.** Slack intake, review, outcomes, and alerts keep working exactly as today.
@@ -377,14 +392,15 @@ Logic is duplicated at runtime (two copies of the analyst node), and the copies 
 
 Design only; nothing is implemented.
 
-- **Where the HTTP Request node lives:** only in `UJH-CC Post Callback`, a sub-workflow with an Execute Workflow Trigger. This is the suite's first HTTP Request node, which requires approval of an exception to its "0 HTTP Request nodes" rule.
+- **Where the HTTP Request node lives:** only in `UJH-CC Post Callback`, a sub-workflow with an Execute Workflow Trigger. This is the suite's first HTTP Request node (approved decision 3).
 - **How workflows invoke it:** `UJH-CC Analyze` and `UJH-CC Generate Proposal` end with an Execute Workflow node (wait for completion) passing `{callback_url, callback_token, body}`. `body` is the full contract payload (`contract`, `run_id`, `status`, `completed_at`, `execution_ref`, `versions`, `models`, `result` or `error`).
 - **Success and failure:** the same sub-workflow sends both. The calling workflow builds `status: "succeeded"` or `status: "failed"` with an `error {code, stage, message, retryable}`.
 - **Headers:** `Authorization: Bearer <N8N_CALLBACK_TOKEN>` from an n8n Header Auth credential (never an expression or config value); `Content-Type: application/json`. The per-run token travels in the body as `callback_token`.
 - **Propagation of `run_id` and per-run token:** both come from the webhook body, are carried as fields through the workflow (for example referenced from the webhook node by name), and are passed to the sub-workflow. They are never interpolated into error messages, Slack text, or Data Tables. `run_id` (not the token) may be embedded in error messages for correlation.
 - **Callback URL handling and allowlisting:** the sub-workflow checks that `callback_url` starts with one of the prefixes in `cc_callback_url_prefixes` (comma-separated `upwork_config` key, for example the production origin plus `/api/integrations/n8n/callback`). On mismatch it does not send, and it raises an error naming the run.
-- **Delivery failure:** HTTP Request with a 10-second timeout and `retryOnFail` (3 tries, 5 seconds apart). On final failure it raises an error. The Command Center then sees the run as effectively timed out at its deadline, and the owner can retry. Optional transitional improvement (needs decision): persist undelivered results in a small n8n Data Table for manual redelivery. Not recommended for v1.
-- **Security note:** because executions are saved (`saveDataSuccessExecution = all`), per-run tokens and listings appear in n8n execution history. Tokens are single-use and become useless after the run is terminal. Consider setting the CC workflows to save only failed executions (needs decision).
+- **Delivery failure:** HTTP Request with a 10-second timeout and `retryOnFail` (3 tries, 5 seconds apart). On final failure it raises an error. The Command Center then sees the run as effectively timed out at its deadline, and the owner can retry. Persisting undelivered results in an n8n Data Table for redelivery is out of scope for v1.
+- **Execution retention (approved decision 6):** the Slack workflows save all executions (`saveDataSuccessExecution = all`). CC workflows will not retain successful executions; failed executions are retained briefly for debugging. Per-run tokens are single-use: the Command Center rejects them once the run is terminal, so a token found in a retained failed execution is useless.
+- **Allowlist (approved decision 5):** enforced in `UJH-CC Post Callback` from `cc_callback_url_prefixes`.
 
 The webhook node of each CC workflow uses Header Auth (`X-UJH-Token`), validates input, then sends Respond to Webhook (202 with `execution_ref`, or 400) **before** processing continues. That continuation behavior must be verified on the live n8n 1.121 instance before relying on it.
 
@@ -405,7 +421,7 @@ The webhook node of each CC workflow uses Header Auth (`X-UJH-Token`), validates
 Rules:
 - CC workflows use error branches (`onError = continueErrorOutput`) on every LLM node so expected failures produce failure callbacks instead of Stop and Error.
 - Stop and Error messages, where still used, embed `run_id=<id>` (never the token).
-- **Error workflow choice (needs decision):** setting W99 as error workflow for CC workflows gives Slack alerts for crashes, but W99 also inserts ERROR rows into `upwork_events` and its `job_id` parser would record `SYSTEM`. Alternative: a small `UJH-CC Error Handler` that only alerts. Recommended: reuse W99 for v1 (no new code, Slack alerts already work), accept the extra event rows.
+- **Error workflow (approved decision 4):** W99 never updates Command Center state. Expected failures are caught inside the CC workflows and sent through `UJH-CC Post Callback` with `status: failed`. W99 may remain the error workflow for operational Slack alerts on unexpected crashes; note that it also inserts ERROR rows into `upwork_events` and records `job_id` as `SYSTEM` for CC runs. Whether to accept those rows or add an alert-only handler is an implementation detail for the CC workflow milestone.
 - Optional later: a correlation table (`run_id` to callback URL and token) so an error handler can post failure callbacks. Not in v1.
 
 ---
@@ -432,17 +448,17 @@ Rules:
 | Slack and error events | `upwork_events` | Do not import | Operational, not business history |
 | Config | `upwork_config` | Not migrated | Remains n8n execution config |
 
-**Volume and real versus test split: impossible to determine locally.** No Data Table export exists in either repository, and reading the live tables was out of scope. Evidence suggests mostly test data: fixtures are tagged `source = test_fixture`, the suite was validated against live Slack on 2026-09-30, and the config seed has `environment = test`. Recommendation: defer the import decision until a read-only export is reviewed; design CC tables so an import is additive.
+**Volume and real versus test split: impossible to determine locally.** No Data Table export exists in either repository, and reading the live tables was out of scope. Evidence suggests mostly test data: fixtures are tagged `source = test_fixture`, the suite was validated against live Slack on 2026-09-30, and the config seed has `environment = test`. Approved decision 7: the import is deferred until a read-only inspection shows meaningful production history; CC tables are designed so an import is additive.
 
 ---
 
 ## 16. Risks
 
-1. **Generator drift (high).** Live W01 and W02 model nodes are hardcoded and differ from generator output. Any regenerate-and-deploy changes the Slack system's models silently. Mitigation: reconcile before any n8n work and add a regenerate-and-diff check.
+1. **Generator drift (high).** Live W01 and W02 model nodes are hardcoded (`claude-sonnet-5-5` for extraction and analysis, `chat-latest` for the analysis fallback) and differ from generator output. Any regenerate-and-deploy changes the Slack system's models silently. **DO NOT deploy regenerated W01, W02, or W03 until drift is reconciled.** Mitigation: reconcile the generators to reproduce the live workflows, then add a regenerate-and-diff check before every deploy.
 2. **Wrong historical model metadata (medium).** Stored model labels come from config, not from the nodes. Do not use imported history for model comparisons.
 3. **Duplicated logic drifts between Slack and CC paths (medium).** Mitigated by generator-level reuse and the drift check.
 4. **Early webhook response behavior unverified (medium).** If n8n 1.121 does not continue after Respond to Webhook as expected, the CC webhooks need a different pattern (for example the webhook executing the processing workflow without waiting). Must be verified on the live instance.
-5. **Secrets and listings in execution history (low to medium).** All executions are saved.
+5. **Secrets and listings in execution history (low to medium).** The Slack workflows save all executions. Mitigated for CC workflows by approved decision 6 (no successful-execution retention, short failed retention, single-use tokens).
 6. **Callback reachability (medium).** Host or URL changes break callbacks until the allowlist is updated; visible as timeouts.
 7. **Unauthenticated legacy webhooks (existing).** `upwork/job-intake`, `upwork/review`, `upwork/outcome` have no authentication today. Out of scope for this plan, but worth fixing independently.
 8. **Execution durations unknown.** Deadlines cannot be set from data. Requires measurement from the live n8n instance.
@@ -450,25 +466,26 @@ Rules:
 
 ---
 
-## 17. Decisions Required
+## 17. Decisions
 
-1. **Model drift:** are the hardcoded live models (`claude-sonnet-5-5` for extraction and analysis, `chat-latest` for the analysis fallback) intended? Update generators to match, or revert the live workflows to config-driven models.
-2. **Parallel CC workflows** (`UJH-CC Analyze`, `UJH-CC Generate Proposal`, `UJH-CC Post Callback`) instead of modifying W01 to W03.
-3. **First HTTP Request node** in the suite, limited to `UJH-CC Post Callback`.
-4. **Error workflow for CC workflows:** reuse W99 (recommended) or add a dedicated alert-only handler.
-5. **New config key** `cc_callback_url_prefixes` in `upwork_config`.
-6. **Execution data retention** for CC workflows: keep saving all executions, or save failures only.
-7. **Historical data import:** defer until a read-only export is reviewed (recommended), or decide now.
+All seven owner decisions from the original audit were approved on October 1, 2026 and are recorded in [Approved decisions](#approved-decisions-october-1-2026) at the top of this document.
+
+Unresolved technical questions (not owner decisions):
+1. Measured execution durations for analyze and proposal runs. Requires measurement from the live n8n instance.
+2. Whether n8n 1.121 continues executing after an early Respond to Webhook node (risk 4).
+3. Whether the live `upwork_config` matches the seed (risk 9).
+4. How n8n execution retention is configured per workflow on the live instance to satisfy decision 6.
+5. Whether token usage can be returned on n8n 1.121.
 
 ---
 
-## 18. Recommended Implementation Order
+## 18. Implementation Order
 
-Stops before implementation; each step needs approval to start.
+Each step starts only after the previous one is reviewed.
 
 1. **Foundation (CC repo).** Node 24, test tooling, CI, env schema, owner guard. No n8n contact.
 2. **Contract scaffolding (CC repo).** Zod schemas and fixtures for `ujh.analyze.v1`, `ujh.generate_proposal.v1`, `ujh.health.v1`, derived from the parser schemas in Sections 3 to 5.
-3. **n8n preparation (suite, needs decisions 1 to 5).**
+3. **n8n preparation (suite; follows approved decisions 1 to 6).**
    1. Measure execution durations and verify early-respond behavior on the live instance (read-only test workflow).
    2. Reconcile generator drift; add regenerate-and-diff check.
    3. Factor shared node builders; prove W01 to W03 regenerate identically.
