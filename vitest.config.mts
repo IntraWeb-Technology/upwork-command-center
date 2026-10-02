@@ -13,6 +13,8 @@ export default defineConfig({
     // a `// @vitest-environment jsdom` comment at the top of the file.
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Need PostgreSQL; run with `bun run test:integration` (vitest.integration.config.mts).
+    exclude: ['src/**/*.integration.test.ts', 'node_modules/**'],
     setupFiles: ['./src/test/setup.ts'],
     restoreMocks: true,
     unstubEnvs: true

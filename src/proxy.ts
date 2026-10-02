@@ -2,7 +2,8 @@ import { clerkMiddleware } from '@clerk/nextjs/server';
 
 // clerkMiddleware() only attaches the auth context to every request.
 // Authorization lives at each boundary: the /dashboard layout (`auth.protect()`
-// plus the owner check) and every API route handler (`withOwner`).
+// plus the owner check) and every API route handler (`withOwner`). The n8n callback
+// route is the exception: it authenticates with its own bearer and per-run tokens.
 export default clerkMiddleware();
 export const config = {
   matcher: [

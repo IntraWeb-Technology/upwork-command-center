@@ -33,6 +33,21 @@ jobs:
     name: Lint, test, build, smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      # Disposable database with synthetic credentials; no secrets involved.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ucc
+          POSTGRES_PASSWORD: ucc_ci_only
+          POSTGRES_DB: ucc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ucc -d ucc_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v4
 
@@ -62,8 +77,21 @@ jobs:
       - name: Contract tests and fixtures
         run: bun run test:contracts
 
-      - name: Unit and integration tests
+      - name: Unit tests
         run: bun run test
+
+      - name: Migrations are current with the schema
+        run: bun run db:check
+
+      - name: Apply migrations to an empty database
+        env:
+          DATABASE_URL: postgres://ucc:ucc_ci_only@localhost:5432/ucc_test
+        run: bun run db:migrate
+
+      - name: Database integration tests
+        env:
+          TEST_DATABASE_URL: postgres://ucc:ucc_ci_only@localhost:5432/ucc_test
+        run: bun run test:integration
 
       - name: Check Clerk configuration
         run: |

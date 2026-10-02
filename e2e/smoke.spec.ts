@@ -23,3 +23,15 @@ test('reference API routes reject signed-out requests', async ({ request }) => {
     expect(await response.json()).toMatchObject({ error: { code: 'UNAUTHENTICATED' } });
   }
 });
+
+test('the n8n callback route is machine-authenticated, not redirected to Clerk', async ({
+  request
+}) => {
+  const response = await request.post('/api/integrations/n8n/callback', {
+    data: { run_id: 'unknown', callback_token: 'x', contract: 'ujh.analyze.v1' },
+    maxRedirects: 0
+  });
+
+  expect(response.status()).toBe(401);
+  expect(await response.json()).toEqual({ error: 'unauthorized' });
+});

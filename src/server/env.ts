@@ -7,6 +7,9 @@ const requiredString = (rule: string) =>
   });
 
 const optionalUrl = z.url({ error: 'must be a valid URL' }).optional();
+const optionalPostgresUrl = z
+  .url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// or postgresql:// URL' })
+  .optional();
 const optionalToken = z.string().min(32, { error: 'must be at least 32 characters' }).optional();
 
 const serverEnvSchema = z.object({
@@ -18,16 +21,20 @@ const serverEnvSchema = z.object({
     error: 'must be a Clerk user ID (user_...)'
   }),
 
-  // Future integrations. Validated only when present; they become required in
-  // the Persistence and Run engine milestones.
-  DATABASE_URL: optionalUrl,
-  DATABASE_URL_DIRECT: optionalUrl,
+  // Validated at startup when present, but required only by the code paths that use them
+  // (see requireServerEnv), so auth-only pages keep working without a database or n8n.
+  DATABASE_URL: optionalPostgresUrl,
+  DATABASE_URL_DIRECT: optionalPostgresUrl,
   N8N_BASE_URL: optionalUrl,
   N8N_WEBHOOK_TOKEN: optionalToken,
   N8N_CALLBACK_TOKEN: optionalToken
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
+
+type OptionalServerEnvKey = {
+  [K in keyof ServerEnv]-?: undefined extends ServerEnv[K] ? K : never;
+}[keyof ServerEnv];
 
 export class ServerEnvError extends Error {
   readonly problems: string[];
@@ -58,4 +65,14 @@ export function parseServerEnv(source: Record<string, string | undefined>): Serv
 
 export function getServerEnv(): ServerEnv {
   return parseServerEnv(process.env);
+}
+
+/** Returns an optional variable that a specific feature cannot work without. */
+export function requireServerEnv<K extends OptionalServerEnvKey>(
+  key: K,
+  env: ServerEnv = getServerEnv()
+): NonNullable<ServerEnv[K]> {
+  const value = env[key];
+  if (value === undefined) throw new ServerEnvError([`${key} is required for this feature`]);
+  return value as NonNullable<ServerEnv[K]>;
 }

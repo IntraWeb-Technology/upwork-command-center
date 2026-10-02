@@ -156,7 +156,7 @@ Every outcome mutation writes the `applications` milestone column and the matchi
 
 ## 4. Persistence Model
 
-Conventions: UUIDv7 or ULID primary keys (time-sortable, safe to expose); `timestamptz` everywhere; Postgres enums for small closed sets; `jsonb` only for full raw payloads and evolving feature sets, never for fields that analytics will filter on routinely. No `tenant_id` or `user_id` columns (single user). Append-only tables have no `updated_at`.
+Conventions: UUIDv7 primary keys in the native `uuid` type (time-sortable, safe to expose; chosen over ULID in the Persistence milestone); `timestamptz` everywhere; Postgres enums for small closed sets; `jsonb` only for full raw payloads and evolving feature sets, never for fields that analytics will filter on routinely. No `tenant_id` or `user_id` columns (single user). Append-only tables have no `updated_at`.
 
 ```mermaid
 erDiagram
@@ -226,6 +226,7 @@ erDiagram
 - **Fields:** `id` (the correlation ID sent to n8n), `kind` (`intake_scan | analyze | generate_proposal | learning_interpret`), `job_id` (nullable), `status` (persisted: `queued | running | succeeded | failed`), `contract_version`, `request` jsonb (secrets stripped), `result` jsonb, `error_code`, `error_message`, `retryable`, `callback_token_hash`, `n8n_execution_ref` (opaque, for debugging links only), `attempt`, `retry_of_run_id`, `requested_at`, `dispatched_at` (set when n8n acknowledged), `finished_at`, `deadline_at`.
 - **Timeouts are derived, not stored:** the read model exposes `effective_status = 'timed_out'` when `deadline_at < now()` and the persisted status is `queued` or `running`. No read path writes. "Completed after deadline" is derivable as `finished_at > deadline_at`. See Section 8.
 - **Constraint:** partial unique index on (`job_id`, `kind`) where status in (`queued`, `running`) to prevent double-clicks starting duplicate LLM runs. A run that is effectively timed out still holds this slot until it is resolved; the "Retry" action (a POST) first marks the stale run `failed` with `error_code = TIMEOUT`, then creates the new run, in one transaction.
+- **Implemented (Persistence milestone):** `kind` plus `contract_version` became a single `contract` column (for example `ujh.analyze.v1`); `error_stage` was added. `job_id` and the partial unique index are deferred until the `jobs` table exists. IDs are UUIDv7. See [persistence.md](./persistence.md).
 
 ### `config_snapshots`
 - **Purpose:** Records exactly which workflow, prompt, scoring, and model versions produced each result, without the Command Center owning prompt text yet.
@@ -427,7 +428,7 @@ The authoritative schemas now live in `src/contracts/` and are documented in [co
 - **Run deadline:** per kind (initial values: intake 5 min, analyze 5 min, proposal 5 min; tune after measuring real durations, which the repository does not contain). Reads never mutate: the API derives `effective_status = 'timed_out'` when `deadline_at < now()` and the persisted status is non-terminal. A valid callback that arrives after the deadline is accepted normally, because the persisted status is still `queued` or `running`; the run becomes `succeeded` (or `failed`) and the UI replaces "Timed out" with the real result on its next poll. A future reconciler may persist timeout transitions if operational analytics need them; v1 has no scheduler.
 - **LLM retries stay in n8n** (it already retries and falls back). Next.js never auto-retries a failed LLM run. "Retry" in the UI is a POST that marks an effectively timed-out run `failed` (`TIMEOUT`) and creates a new run with `retry_of_run_id`, in one transaction.
 - **n8n errors before callback:** Command Center-facing workflows route expected failures (model errors, validation failures) to a failure callback inside the workflow itself. Unexpected crashes that only reach the error workflow cannot be correlated reliably in v1, so the deadline covers them (refactor plan, Section 13).
-- **Response validation:** every callback is parsed with the contract's Zod schema. Invalid payloads mark the run `failed` with `MODEL_OUTPUT_INVALID` or `INTERNAL`, keep the raw body in `workflow_runs.result`, and alert via Sentry.
+- **Response validation:** every callback is parsed with the contract's Zod schema. Invalid payloads mark the run `failed` with `INTERNAL` (stage `callback`) and alert via Sentry. As implemented, the raw body is not kept: the error message lists only the failing issue paths, so unvalidated content (possibly listing or proposal text) is never persisted.
 
 ---
 

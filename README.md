@@ -99,6 +99,19 @@ git clone https://github.com/IntraWeb-Technology/upwork-command-center.git
 
 The app runs at http://localhost:3000 (or the next free port).
 
+### Local database (optional until a feature needs it)
+
+Requires Docker. The compose database uses synthetic, local-only credentials on `127.0.0.1:54329`:
+
+```bash
+docker compose up -d --wait   # Postgres 17 with ucc_dev and ucc_test databases
+# In .env.local: DATABASE_URL=postgres://ucc:ucc_local_only@127.0.0.1:54329/ucc_dev
+bun run db:migrate            # apply committed migrations to ucc_dev
+bun run test:integration      # integration tests (recreate the ucc_test schema)
+```
+
+See [docs/persistence.md](./docs/persistence.md).
+
 > [!NOTE]
 > On Windows, keep LF line endings (`git config core.autocrlf false`) or `bun run format:check` will flag every file.
 
@@ -108,7 +121,7 @@ See `env.example.txt`. Never commit `.env*` files or real keys, user IDs, URLs, 
 
 - **Required:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `OWNER_CLERK_USER_ID`.
 - **Optional:** Sentry (inactive without `NEXT_PUBLIC_SENTRY_DSN`) and build settings.
-- **Not used yet:** database and n8n variables; they are validated only if set.
+- **Feature-scoped:** `DATABASE_URL` (and optional `DATABASE_URL_DIRECT` for migrations), `N8N_BASE_URL`, `N8N_WEBHOOK_TOKEN`, `N8N_CALLBACK_TOKEN`. They are validated only if set; sign-in and the dashboard work without them, and code that needs one fails with its name. The n8n callback route answers `401` while `N8N_CALLBACK_TOKEN` is unset.
 
 Server variables are validated at startup by `src/server/env.ts`. A missing or invalid value stops the server with the variable names (never the values).
 
@@ -130,8 +143,12 @@ See [docs/clerk_setup.md](./docs/clerk_setup.md). The sign-in and sign-up URLs m
 | `bun run typecheck`    | TypeScript check              |
 | `bun run lint`         | OxLint                        |
 | `bun run format:check` | Oxfmt check                   |
-| `bun run test`         | Unit and integration tests (Vitest, single run) |
+| `bun run test`         | Unit tests (Vitest, single run, no database) |
 | `bun run test:watch`   | Vitest in watch mode          |
+| `bun run test:integration` | PostgreSQL integration tests (`*.integration.test.ts`; needs the compose database or `TEST_DATABASE_URL` ending in `_test`) |
+| `bun run db:generate --name <change>` | Generate a SQL migration from `src/server/db/schema.ts` |
+| `bun run db:migrate`   | Apply committed migrations (`DATABASE_URL_DIRECT`, else `DATABASE_URL`) |
+| `bun run db:check`     | Fail if the schema has changes without a migration |
 | `bun run test:contracts` | n8n contract tests and fixture validation |
 | `bun run contracts:generate` | Regenerate `contracts/json-schema` from the Zod contracts |
 | `bun run contracts:check` | Fail if the committed JSON Schema is stale |
@@ -145,6 +162,8 @@ Tests live next to the code as `*.test.ts(x)`; component tests opt into jsdom wi
 
 CI also fails when the generated contract JSON Schema is stale (`bun run contracts:check`); see [docs/contracts.md](./docs/contracts.md).
 
+A disposable PostgreSQL 17 service (synthetic credentials, no secrets) backs three more steps: `db:check` (schema changed without a migration), `db:migrate` against the empty database, and `test:integration`.
+
 GitHub currently annotates runs with "Node.js 20 is deprecated" for `actions/checkout@v4` and `actions/setup-node@v4`. The runner already executes them on Node 24 and the jobs pass, so this is informational; upgrading those actions is a separate maintenance task.
 
 Git hooks: pre-commit formats staged files; pre-push runs a production build.
@@ -152,6 +171,7 @@ Git hooks: pre-commit formats staged files; pre-push runs a production build.
 ## Further documentation
 
 - [docs/contracts.md](./docs/contracts.md) - versioned n8n integration contracts
+- [docs/persistence.md](./docs/persistence.md) - PostgreSQL, migrations, workflow runs, callback security
 - [docs/forms.md](./docs/forms.md) - form system (TanStack Form + Zod)
 - [docs/themes.md](./docs/themes.md) - theme system
 - [docs/deployment.md](./docs/deployment.md) - Vercel and Docker deployment

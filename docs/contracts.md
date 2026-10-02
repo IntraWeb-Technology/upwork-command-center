@@ -30,7 +30,7 @@ import { analyzeCallbackSchema, type AnalyzeCallback } from '@/contracts';
 
 - **Versioning.** Each contract has a literal id (`ujh.analyze.v1`). Parsing rejects any other value. A breaking change means a new literal (`v2`) alongside the old one, not an edit.
 - **Strict objects.** Every object rejects unknown keys. A new field is a contract change, which surfaces drift instead of silently dropping data.
-- **IDs are opaque.** `entityIdSchema` accepts any URL-safe identifier of up to 128 characters (UUIDv7 and ULID both fit). The format will be fixed when persistence is chosen, not before.
+- **IDs are opaque.** `entityIdSchema` accepts any URL-safe identifier of up to 128 characters. The Command Center now generates UUIDv7 run IDs ([persistence.md](./persistence.md)); the contracts stay format-agnostic, so n8n must treat IDs as opaque strings.
 - **No n8n internals.** No node names, node ids, Data Table ids, or Slack fields cross the boundary. `execution_ref` is an opaque debugging string.
 - **Model metadata records what executed.** Each `modelExecutionSchema` record is `{ model, provider, fallback_used, primary_error }`. `model` must be the model that actually ran, reported from the same expression that configures the model node, never a separately read config label. `provider` is `null` unless n8n supplies it explicitly. `primary_error` is required exactly when `fallback_used` is true.
 - **Cross-field rules live in Zod.** JSON Schema cannot express refinements (for example "analysis is null exactly when the hard filter failed"). Zod is authoritative; the JSON Schema is a structural aid for n8n.
