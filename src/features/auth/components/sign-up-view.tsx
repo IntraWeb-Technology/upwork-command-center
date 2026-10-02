@@ -1,27 +1,16 @@
-import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SignUp as ClerkSignUpForm } from '@clerk/nextjs';
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { InteractiveGridPattern } from './interactive-grid';
 
 export const metadata: Metadata = {
   title: 'Authentication',
-  description: 'Authentication forms built using the components.'
+  description: 'Sign in to Upwork Command Center.'
 };
 
 export default function SignUpViewPage() {
   return (
     <div className='relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0'>
-      <Link
-        href='/examples/authentication'
-        className={cn(
-          buttonVariants({ variant: 'ghost' }),
-          'absolute top-4 right-4 hidden md:top-8 md:right-8'
-        )}
-      >
-        Sign Up
-      </Link>
       <div className='relative hidden h-full flex-col p-10 lg:flex dark:border-r'>
         <div className='absolute inset-0 bg-sidebar' />
         <div className='text-sidebar-foreground relative z-20 flex items-center text-lg font-medium'>
@@ -37,7 +26,7 @@ export default function SignUpViewPage() {
           >
             <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
           </svg>
-          Logo
+          Upwork Command Center
         </div>
         <InteractiveGridPattern
           className={cn(
@@ -46,13 +35,9 @@ export default function SignUpViewPage() {
           )}
         />
         <div className='text-sidebar-foreground relative z-20 mt-auto'>
-          <blockquote className='space-y-2'>
-            <p className='text-lg'>
-              &ldquo;This starter template has saved me countless hours of work and helped me
-              deliver projects to my clients faster than ever before.&rdquo;
-            </p>
-            <footer className='text-sidebar-foreground/70 text-sm'>Random Dude</footer>
-          </blockquote>
+          <p className='text-lg'>
+            Personal control center for the Upwork Job Hunter Automation system.
+          </p>
         </div>
       </div>
       <div className='flex h-full items-center justify-center p-4 lg:p-8'>
