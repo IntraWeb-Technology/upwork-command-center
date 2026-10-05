@@ -1,0 +1,25 @@
+---
+description: UJH V2 implementation guardrails
+alwaysApply: true
+---
+
+# UJH V2
+
+Before implementing or changing UJH V2, read and follow:
+- docs/upwork/v2/ARCHITECTURE.md
+- docs/upwork/v2/BEHAVIOR-BASELINE.md
+- docs/upwork/v2/DATA-CONTRACTS.md
+- docs/upwork/v2/STATE-MACHINE.md
+- docs/upwork/v2/MIGRATION.md
+
+These files are authoritative for V2.
+
+Rules:
+- Build V2 alongside V1. Do not modify, disable, or archive V1 unless explicitly instructed.
+- Prefer purpose-built official actions, then specialized n8n nodes, then simple orchestration. Use HTTP or small Code nodes only when they are clearer/necessary.
+- Use deterministic logic before AI. AI must not own workflow topology, persistence, scoring arithmetic, or authoritative state.
+- Keep workflows small, single-purpose, and readable. Do not hide complexity in giant expressions.
+- Reuse shared services for repeated config loading, job loading, event logging, and state transitions.
+- Do not silently change architecture, schema, scoring semantics, protected Slack commands, state semantics, security/credentials, dependencies, paid services, or supported V1 behavior.
+- Resolve ordinary implementation, wiring, expression, validation, retry, fixture, layout, and test failures autonomously.
+- Implement, test, repair, retest, and report completion.
