@@ -1,0 +1,279 @@
+{
+  "title": "ujh.generate_proposal.v1 request",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract": {
+      "type": "string",
+      "const": "ujh.generate_proposal.v1"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "callback": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "url",
+        "token"
+      ],
+      "additionalProperties": false
+    },
+    "job": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "job_category": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "NEXTJS_REACT",
+                "SENIOR_FULL_STACK",
+                "API_INTEGRATION",
+                "AI_AUTOMATION",
+                "QUICK_FIX",
+                "OTHER"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "budget_type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "fixed",
+                "hourly"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "budget_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "budget_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hourly_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hourly_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "connect_cost": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "job_category",
+        "budget_type",
+        "budget_min",
+        "budget_max",
+        "hourly_min",
+        "hourly_max",
+        "connect_cost"
+      ],
+      "additionalProperties": false
+    },
+    "listing": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 100000
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "analysis": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+            },
+            "client_problem": {
+              "type": "string"
+            },
+            "recommended_positioning": {
+              "type": "string"
+            },
+            "why_candidate_matches": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "positive_signals": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "red_flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "missing_information": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "analysis_summary": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "client_problem",
+            "recommended_positioning",
+            "why_candidate_matches",
+            "positive_signals",
+            "red_flags",
+            "missing_information",
+            "analysis_summary"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "base_version": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "number": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "body": {
+              "type": "string",
+              "maxLength": 20000
+            }
+          },
+          "required": [
+            "number",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "instructions": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 4000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contract",
+    "run_id",
+    "requested_at",
+    "callback",
+    "job",
+    "listing",
+    "analysis",
+    "base_version",
+    "instructions"
+  ],
+  "additionalProperties": false
+}

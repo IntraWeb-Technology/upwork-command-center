@@ -1,0 +1,379 @@
+{
+  "title": "ujh.generate_proposal.v1 callback",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "ujh.generate_proposal.v1"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "callback_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 512
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "execution_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "const": "succeeded"
+        },
+        "versions": {
+          "type": "object",
+          "properties": {
+            "workflow": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "proposal_strategy_prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "proposal_writer_prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "profile_hash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8,64}$"
+            }
+          },
+          "required": [
+            "workflow",
+            "proposal_strategy_prompt",
+            "proposal_writer_prompt",
+            "profile_hash"
+          ],
+          "additionalProperties": false
+        },
+        "models": {
+          "type": "object",
+          "properties": {
+            "strategy": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "provider": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fallback_used": {
+                  "type": "boolean"
+                },
+                "primary_error": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "model",
+                "provider",
+                "fallback_used",
+                "primary_error"
+              ],
+              "additionalProperties": false
+            },
+            "writer": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "provider": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fallback_used": {
+                  "type": "boolean"
+                },
+                "primary_error": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "model",
+                "provider",
+                "fallback_used",
+                "primary_error"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "strategy",
+            "writer"
+          ],
+          "additionalProperties": false
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "type": "string",
+              "maxLength": 20000,
+              "pattern": "^[^\\u2014]*$"
+            },
+            "strategy": {
+              "type": "object",
+              "properties": {
+                "client_real_problem": {
+                  "type": "string"
+                },
+                "proposal_angle": {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                "opening_hook": {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                "relevant_experience": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "key_points": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "technical_details": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "recommended_case_study": {
+                  "type": "string"
+                },
+                "include_case_study_link": {
+                  "type": "boolean"
+                },
+                "recommended_bid_strategy": {
+                  "type": "string"
+                },
+                "questions_to_client": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "risk_to_address": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "client_real_problem",
+                "proposal_angle",
+                "opening_hook",
+                "relevant_experience",
+                "key_points",
+                "technical_details",
+                "recommended_case_study",
+                "include_case_study_link",
+                "recommended_bid_strategy",
+                "questions_to_client",
+                "risk_to_address"
+              ],
+              "additionalProperties": false
+            },
+            "sanitizer": {
+              "type": "object",
+              "properties": {
+                "em_dashes_removed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "em_dashes_removed"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "body",
+            "strategy",
+            "sanitizer"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "run_id",
+        "callback_token",
+        "completed_at",
+        "execution_ref",
+        "status",
+        "versions",
+        "models",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "ujh.generate_proposal.v1"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "callback_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 512
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "execution_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "const": "failed"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "INVALID_INPUT",
+                "UPSTREAM_UNAVAILABLE",
+                "MODEL_ERROR",
+                "MODEL_OUTPUT_INVALID",
+                "TIMEOUT",
+                "INTERNAL"
+              ]
+            },
+            "stage": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "input",
+                    "config",
+                    "strategy",
+                    "writer",
+                    "validation"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "stage",
+            "message",
+            "retryable"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "run_id",
+        "callback_token",
+        "completed_at",
+        "execution_ref",
+        "status",
+        "error"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

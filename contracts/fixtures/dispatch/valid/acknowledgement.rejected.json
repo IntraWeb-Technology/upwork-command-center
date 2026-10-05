@@ -1,0 +1,7 @@
+{
+  "accepted": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "input.listing_text is required"
+  }
+}

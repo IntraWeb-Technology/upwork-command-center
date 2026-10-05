@@ -1,0 +1,49 @@
+{
+  "contract": "ujh.generate_proposal.v1",
+  "run_id": "01920000-0000-7000-8000-00000000p001",
+  "callback_token": "rt_synthetic_fixture_token_proposal_001",
+  "completed_at": "2026-10-02T14:11:30Z",
+  "execution_ref": "fixture-exec-2001",
+  "status": "succeeded",
+  "versions": {
+    "workflow": "cc-generate-proposal@2026-10-05.1",
+    "proposal_strategy_prompt": "proposal-v4",
+    "proposal_writer_prompt": "proposal-v4",
+    "profile_hash": "a41c9e02"
+  },
+  "models": {
+    "strategy": {
+      "model": "fixture-strategy-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    },
+    "writer": {
+      "model": "fixture-writer-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    }
+  },
+  "result": {
+    "body": "Synthetic fixture proposal. Your team needs new reporting pages without slowing down the rest of the roadmap. I have extended several Next.js and PostgreSQL dashboards in production, and I would start by profiling the slowest queries so the new role-based pages load quickly from day one.\n\nWhich Next.js version is the dashboard on today?",
+    "strategy": {
+      "client_real_problem": "Reporting requests outpace the internal team.",
+      "proposal_angle": "Safe extension of an existing dashboard with performance first.",
+      "opening_hook": "Reporting pages without slowing the roadmap.",
+      "relevant_experience": ["Extended production Next.js dashboards"],
+      "key_points": [
+        "Profile slow queries first",
+        "Role-based reporting pages",
+        "Tests for new pages"
+      ],
+      "technical_details": ["PostgreSQL query plans", "Server components for reports"],
+      "recommended_case_study": "none",
+      "include_case_study_link": false,
+      "recommended_bid_strategy": "Bid near the middle of the stated range.",
+      "questions_to_client": ["Which Next.js version is the dashboard on today?"],
+      "risk_to_address": "Unknown legacy code quality."
+    },
+    "sanitizer": { "em_dashes_removed": 0 }
+  }
+}

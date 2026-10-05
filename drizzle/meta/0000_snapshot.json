@@ -1,0 +1,218 @@
+{
+  "id": "7418940f-753f-4ac6-bc7f-3cae9fb64f52",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.workflow_runs": {
+      "name": "workflow_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "contract": {
+          "name": "contract",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "workflow_run_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
+        "request": {
+          "name": "request",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_stage": {
+          "name": "error_stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retryable": {
+          "name": "retryable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "callback_token_hash": {
+          "name": "callback_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "n8n_execution_ref": {
+          "name": "n8n_execution_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempt": {
+          "name": "attempt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "retry_of_run_id": {
+          "name": "retry_of_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_at": {
+          "name": "requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dispatched_at": {
+          "name": "dispatched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_at": {
+          "name": "deadline_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "workflow_runs_retry_of_run_id_unique": {
+          "name": "workflow_runs_retry_of_run_id_unique",
+          "columns": [
+            {
+              "expression": "retry_of_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workflow_runs_requested_at_idx": {
+          "name": "workflow_runs_requested_at_idx",
+          "columns": [
+            {
+              "expression": "requested_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workflow_runs_retry_of_run_id_fk": {
+          "name": "workflow_runs_retry_of_run_id_fk",
+          "tableFrom": "workflow_runs",
+          "tableTo": "workflow_runs",
+          "columnsFrom": [
+            "retry_of_run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "workflow_runs_contract_check": {
+          "name": "workflow_runs_contract_check",
+          "value": "\"workflow_runs\".\"contract\" in ('ujh.analyze.v1', 'ujh.generate_proposal.v1')"
+        },
+        "workflow_runs_callback_token_hash_check": {
+          "name": "workflow_runs_callback_token_hash_check",
+          "value": "\"workflow_runs\".\"callback_token_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "workflow_runs_deadline_check": {
+          "name": "workflow_runs_deadline_check",
+          "value": "\"workflow_runs\".\"deadline_at\" > \"workflow_runs\".\"requested_at\""
+        },
+        "workflow_runs_attempt_check": {
+          "name": "workflow_runs_attempt_check",
+          "value": "\"workflow_runs\".\"attempt\" >= 1 and (\"workflow_runs\".\"attempt\" = 1) = (\"workflow_runs\".\"retry_of_run_id\" is null)"
+        },
+        "workflow_runs_error_code_check": {
+          "name": "workflow_runs_error_code_check",
+          "value": "\"workflow_runs\".\"error_code\" is null or \"workflow_runs\".\"error_code\" in ('INVALID_INPUT', 'UPSTREAM_UNAVAILABLE', 'MODEL_ERROR', 'MODEL_OUTPUT_INVALID', 'TIMEOUT', 'INTERNAL')"
+        },
+        "workflow_runs_outcome_check": {
+          "name": "workflow_runs_outcome_check",
+          "value": "case \"workflow_runs\".\"status\"\n        when 'succeeded' then \"workflow_runs\".\"finished_at\" is not null and \"workflow_runs\".\"result\" is not null and \"workflow_runs\".\"error_code\" is null\n        when 'failed' then \"workflow_runs\".\"finished_at\" is not null and \"workflow_runs\".\"result\" is null and \"workflow_runs\".\"error_code\" is not null and \"workflow_runs\".\"error_message\" is not null and \"workflow_runs\".\"retryable\" is not null\n        else \"workflow_runs\".\"finished_at\" is null and \"workflow_runs\".\"result\" is null and \"workflow_runs\".\"error_code\" is null\n      end"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.workflow_run_status": {
+      "name": "workflow_run_status",
+      "schema": "public",
+      "values": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

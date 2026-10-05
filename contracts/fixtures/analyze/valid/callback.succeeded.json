@@ -1,0 +1,106 @@
+{
+  "contract": "ujh.analyze.v1",
+  "run_id": "01920000-0000-7000-8000-00000000a001",
+  "callback_token": "rt_synthetic_fixture_token_analyze_0001",
+  "completed_at": "2026-10-02T14:04:02Z",
+  "execution_ref": "fixture-exec-1001",
+  "status": "succeeded",
+  "versions": {
+    "workflow": "cc-analyze@2026-10-05.1",
+    "scoring": "score-v1",
+    "extraction_prompt": "extract-v1",
+    "analysis_prompt": "analysis-v1",
+    "profile_hash": "a41c9e02",
+    "scoring_weights": {
+      "technical_fit": 0.25,
+      "budget_score": 0.15,
+      "client_quality": 0.15,
+      "long_term_potential": 0.15,
+      "communication_quality": 0.1,
+      "competition_score": 0.1,
+      "strategic_fit": 0.1
+    },
+    "score_thresholds": { "priority": 8, "review": 6 },
+    "hard_filter_rules": {
+      "reject_if_us_excluded": true,
+      "require_verified_payment": true,
+      "reject_likely_scam": true,
+      "refused_conditions": ["unpaid test or unpaid trial work"],
+      "min_listing_chars": 120
+    }
+  },
+  "models": {
+    "extraction": {
+      "model": "fixture-extraction-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    },
+    "analysis": {
+      "model": "fixture-analysis-model",
+      "provider": null,
+      "fallback_used": false,
+      "primary_error": null
+    }
+  },
+  "result": {
+    "extraction": {
+      "status": "ok",
+      "error": null,
+      "facts": {
+        "title": "Synthetic: extend a Next.js admin dashboard",
+        "posted_at": "2 hours ago",
+        "budget_type": "fixed",
+        "budget_min": 3000,
+        "budget_max": 5000,
+        "hourly_min": null,
+        "hourly_max": null,
+        "connect_cost": 16,
+        "payment_verified": true,
+        "client_location": "Exampleland",
+        "client_total_spend": 42000,
+        "client_hires": 18,
+        "client_rating": 4.9,
+        "proposal_count": "10 to 15",
+        "proposals_min": 10,
+        "proposals_max": 15,
+        "skills": ["Next.js", "TypeScript", "PostgreSQL"],
+        "job_category": "NEXTJS_REACT",
+        "excludes_us_freelancers": false,
+        "is_likely_scam": false,
+        "scam_signals": [],
+        "refused_conditions_found": [],
+        "listing_is_incomplete": false,
+        "summary": "Synthetic client extending an existing Next.js dashboard."
+      }
+    },
+    "hard_filter": { "pass": true, "reasons": [] },
+    "analysis": {
+      "scores": {
+        "technical_fit": 9,
+        "budget_score": 7,
+        "client_quality": 8,
+        "long_term_potential": 7,
+        "communication_quality": 8,
+        "competition_score": 6,
+        "strategic_fit": 8
+      },
+      "dimension_evidence": {
+        "technical_fit": "Next.js and PostgreSQL are core skills.",
+        "competition_score": "10 to 15 proposals already submitted."
+      },
+      "weighted_score": 7.75,
+      "red_flag_penalty": 0,
+      "system_score": 7.8,
+      "system_disposition": "REVIEW",
+      "red_flags": ["Scope of legacy code unknown"],
+      "positive_signals": ["Verified payment", "Repeat hiring history"],
+      "client_problem": "The internal team cannot keep up with reporting requests.",
+      "why_candidate_matches": ["Production Next.js and PostgreSQL work"],
+      "missing_information": ["Next.js version"],
+      "recommended_positioning": "Senior engineer who can extend an existing codebase safely.",
+      "client_summary": "Synthetic client, verified payment, 18 hires, 4.9 rating.",
+      "analysis_summary": "Solid fit with a reliable client and moderate competition."
+    }
+  }
+}
